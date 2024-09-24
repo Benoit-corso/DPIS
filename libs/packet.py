@@ -3,7 +3,6 @@ from libs import sniffer
 
 kill = False
 def create_payload(payload):
-    
     pkt = sniffer.inject_packet
     pkt.load = payload
     del pkt.len

