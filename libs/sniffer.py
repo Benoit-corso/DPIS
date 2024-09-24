@@ -21,7 +21,8 @@ def export():
     scapy.wrpcap(settings.data)
 
 def print_pkt(pkt):
-    scapy.hexdump(pkt)
+#    pkt.show()
+#    pkt.hexraw()
 
 inject_packet = None
 current_response = None
