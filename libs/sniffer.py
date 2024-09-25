@@ -1,7 +1,10 @@
 import time
 import threading
 from libs import injector, packet as lpkt
+from libs import logger
 from scapy.all import *
+
+log = logger.settings.logger
 
 class settings:
     iface   = ""
@@ -19,7 +22,9 @@ class settings:
 class sniffer:
     def sniff(pkt):
         global settings
-        injector.settings.proto.add_queue(pkt);
+#        pkt.show()
+#        print("packet received")
+        injector.settings.proto.events.add_queue(pkt);
 
 #        if pkt[IP].src == settings.dst:
 #            print("Server: " +str(pkt[TCP].flags))
@@ -48,7 +53,7 @@ class sniffer:
 
     def __init__(self):
         global settings
-        print("sniffing...")
+        print('sniffing on iface {} port {}...', settings.iface, settings.port)
         plist = sniff(prn=sniffer.sniff, iface=settings.iface, filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", stop_filter=lambda p: settings.stop.is_set())
         settings.running = False
         if settings.pcap == True:
@@ -63,7 +68,7 @@ def stop():
     settings.stop.set()
 
 # Setup and start sniffing into a multi-threaded context
-def start(src, dst, port, iface, pcap = False):
+def start(src, dst, port, iface, mac, pcap = False):
     global settings
 
     settings.src    = src
@@ -72,7 +77,7 @@ def start(src, dst, port, iface, pcap = False):
     settings.iface  = iface
     # boolean for writing into a pcap
     settings.pcap   = pcap
-    settings.mac    = get_if_hwaddr(iface)
+    settings.mac    = mac
    
-    print("sniffer is starting!")
+    logger.logger.print("sniffer is starting!")
     threading.Thread(target=sniffer).start()

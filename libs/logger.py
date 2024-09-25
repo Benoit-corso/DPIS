@@ -1,6 +1,7 @@
 from scapy.all import *
 
 class settings:
+    logger  = None
     level   = 0
 
 # This class isn't multi threaded
@@ -33,7 +34,11 @@ class logger:
     def __init__(self):
         global settings
         print("logger initialized with level "+str(settings.level)+".")
+        if settings.logger is None:
+            settings.logger = self
+
 
 def init(level = 1):
     global settings
     settings.level = level
+    return logger()

