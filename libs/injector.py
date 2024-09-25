@@ -51,7 +51,7 @@ class Events:
         while True:
             if pkt is not None:
                 for key, value in self.conditions.items():
-                    print(eval(key, {
+                    if eval(key, {
                         'pkt': pkt,
                         'syn': self.syn,
                         'psh': self.psh,
@@ -59,10 +59,11 @@ class Events:
                         'fin': self.fin,
                         'src': self.src,
                         'dst': self.dst
-                    }))
-                       # value(pkt)
+                    }) == True:
+                        value(pkt)
+                pkt = None
             elif len(self.PacketQueue) != 0:
-                pkt = self.PacketQueue.pop(0)
+                pkt = self.PacketQueue.pop()
     
     def __init__(self, src, dst):
         logger.logger.print("events init")
