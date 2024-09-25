@@ -25,7 +25,7 @@ class Events:
         ack = 0
         fin = 0
 
-    def add_event(self, name, callback, *conditions):
+    def add(self, name, callback, *conditions):
         wrapper = self.create_wrapper(name, conditions, callback);
         self.events[name] = wrapper
         for cond in conditions:
@@ -34,7 +34,7 @@ class Events:
     def create_wrapper(self, name, callback):
         def wrapper(pkt):
             if logger.settings.level > 1:
-                print(name + "was called!")
+                print("Event: " + name + "was called!")
             return callback(pkt);
         return wrapper;    
     
@@ -53,31 +53,23 @@ class Events:
                         'syn': self.syn,
                         'psh': self.psh,
                         'ack': self.ack,
-                        'fin': self.fin
+                        'fin': self.fin,
+                        'src': self.src,
+                        'dst': self.dst
                     }) == True:
                         value(pkt)
             elif len(self.PacketQueue) != 0:
                 pkt = self.PacketQueue.pop(0)
     
-    def __init__(self):
+    def __init__(self, src, dst):
+        self.src = src
+        self.dst = dst
         return self;
 
-# this function isn't multi threaded
-class injector:
-
-    # inject packet from proto
-    def inject(pkt):
-        logger.settings.inject = True
-        lpkt.send(pkt)
-        True
-
-    def __init__(self):
-        global settings
-
-def init(proto = None):
+def init(proto = None, src = "", dst = ""):
     global settings
     if proto is None:
         # actually don't have simple tcp session handler
         print("can't use injector without protocol.")
         return;
-    settings.proto = importlib.import_module("libs.proto."+proto).init()
+    settings.proto = importlib.import_module("libs.proto."+proto).init(src, dst)

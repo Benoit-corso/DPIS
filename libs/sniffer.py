@@ -5,6 +5,7 @@ from scapy.all import *
 
 class settings:
     iface   = ""
+    mac     = ""
     stop    = threading.Event()
     plist   = scapy.plist.PacketList()
     pcap    = False
@@ -18,7 +19,8 @@ class settings:
 class sniffer:
     def sniff(pkt):
         global settings
-        injector.settings.proto.add_queue(pkt)
+        injector.settings.proto.add_queue(pkt);
+
 #        if pkt[IP].src == settings.dst:
 #            print("Server: " +str(pkt[TCP].flags))
 #        if pkt[IP].src == sniff_settings.src:
@@ -47,7 +49,7 @@ class sniffer:
     def __init__(self):
         global settings
         print("sniffing...")
-        plist = sniff(prn=sniffer.sniff, iface=settings.iface, filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", stop_filter=lambda p: sniff_settings.stop.is_set())
+        plist = sniff(prn=sniffer.sniff, iface=settings.iface, filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", stop_filter=lambda p: settings.stop.is_set())
         settings.running = False
         if settings.pcap == True:
             if len(settings.plist) != 0:
@@ -70,6 +72,7 @@ def start(src, dst, port, iface, pcap = False):
     settings.iface  = iface
     # boolean for writing into a pcap
     settings.pcap   = pcap
+    settings.mac    = get_if_hwaddr(iface)
    
     print("sniffer is starting!")
     threading.Thread(target=sniffer).start()

