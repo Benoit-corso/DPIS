@@ -1,0 +1,251 @@
+.....
+        █▐▒▒░░■· ▀█▀   ▀█▀ ▀███   ▀██▀ mitm
+        █      ■· ▀▀▌  █▀   ████   ██
+        █       ■·  ▀▀██    ██ ██  ██ 
+        █       ■·   █▀     ██  ██ ██
+        █      ■·  ░█▀      ██   ████
+        █▐▒▒░░■·  ▄█▀      ▄██▄   ███
+    
+sniffing...
+sniffer started!
+Client: S
+Client: S
+Server: SA
+Server: SA
+Client: A
+ACK detected. 1
+Client: A
+ACK detected. 2
+Server: PA
+Psh true mode
+Server: PA
+Psh true mode
+conditions have been meet.
+
+Sent 1 packets.
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:03
+  src       = 02:42:ac:12:00:02
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = None
+     id        = 4677
+     flags     = DF
+     frag      = 0
+     ttl       = 63
+     proto     = tcp
+     chksum    = None
+     src       = 172.18.0.4
+     dst       = 172.18.0.3
+     \options   \
+###[ TCP ]### 
+        sport     = mysql
+        dport     = 60560
+        seq       = 1072968094
+        ack       = 2242417696
+        dataofs   = 8
+        reserved  = 0
+        flags     = PA
+        window    = 510
+        chksum    = None
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (2362966894, 2210179825))]
+###[ Raw ]### 
+           load      = "H\x00\x00\x02\xc3\xbf\x15\x04#28000Access denied for user 'root'@'172.18.0.3' (using password: NO)"
+
+Client: A
+ACK detected. 1
+Client: A
+ACK detected. 2
+Client: PA
+Psh true mode
+Client: PA
+Psh true mode
+Server: A
+ACK detected. 3
+conditions have been meet.
+
+Sent 1 packets.
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:02
+  src       = 02:42:ac:12:00:04
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = None
+     id        = 4678
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = None
+     src       = 172.18.0.4
+     dst       = 172.18.0.3
+     \options   \
+###[ TCP ]### 
+        sport     = mysql
+        dport     = 60560
+        seq       = 1072968172
+        ack       = 2242417987
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 508
+        chksum    = None
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (2362966895, 2210179825))]
+
+Server: A
+ACK detected. 1
+Server: PA
+Server: PA
+Client: PA
+Client: PA
+Server: PA
+Server: PA
+Client: PA
+Client: PA
+Server: PA
+Server: PA
+Client: PA
+Client: PA
+Server: PA
+Server: PA
+Client: PA
+Client: PA
+Server: PA
+Server: PA
+Client: PA
+Client: PA
+Server: PA
+Server: PA
+Client: PA
+Client: PA
+Server: FA
+Server: FA
+Client: FA
+Client: FA
+Server: A
+ACK detected. 2
+conditions have been meet.
+
+Sent 1 packets.
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:02
+  src       = 02:42:ac:12:00:04
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = None
+     id        = 4686
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = None
+     src       = 172.18.0.4
+     dst       = 172.18.0.3
+     \options   \
+###[ TCP ]### 
+        sport     = mysql
+        dport     = 60560
+        seq       = 1072968580
+        ack       = 2242418120
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 508
+        chksum    = None
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (2362966897, 2210179828))]
+
+Server: A
+ACK detected. 1
+Server: PA
+Client: R
+Client: R
+Server: A
+ACK detected. 2
+conditions have been meet.
+
+Sent 1 packets.
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:02
+  src       = 02:42:ac:12:00:04
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = None
+     id        = 4678
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = None
+     src       = 172.18.0.4
+     dst       = 172.18.0.3
+     \options   \
+###[ TCP ]### 
+        sport     = mysql
+        dport     = 60560
+        seq       = 1072968172
+        ack       = 2242417987
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 508
+        chksum    = None
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (2362966895, 2210179825))]
+
+Server: A
+ACK detected. 1
+Server: A
+ACK detected. 2
+conditions have been meet.
+
+Sent 1 packets.
+###[ Ethernet ]### 
+  dst       = 02:42:ac:12:00:02
+  src       = 02:42:ac:12:00:04
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = None
+     id        = 4678
+     flags     = DF
+     frag      = 0
+     ttl       = 64
+     proto     = tcp
+     chksum    = None
+     src       = 172.18.0.4
+     dst       = 172.18.0.3
+     \options   \
+###[ TCP ]### 
+        sport     = mysql
+        dport     = 60560
+        seq       = 1072968172
+        ack       = 2242417987
+        dataofs   = 8
+        reserved  = 0
+        flags     = A
+        window    = 508
+        chksum    = None
+        urgptr    = 0
+        options   = [('NOP', None), ('NOP', None), ('Timestamp', (2362966895, 2210179825))]
+
+Server: A
+ACK detected. 1
+Killing threads and exiting...
+Killing threads and exiting...

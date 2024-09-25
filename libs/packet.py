@@ -1,42 +1,55 @@
 from scapy.all import *
 from libs import sniffer
 
-kill = False
-def create_payload(payload):
-    pkt = sniffer.inject_packet
-    pkt.load = payload
-    del pkt.len
-    del pkt.options
-    del pkt.chksum
-    del pkt[TCP].chksum
-    return pkt
+def append_packet(pkt = None):
+    global settings
+    if pkt is None:
+        return;
+    settings.plist.append(pkt)
 
-def onfly_reproduce(pkt):
-    layer_ip = pkt[IP]
-    layer_tcp = pkt[TCP]
-    del pkt.len
-    del pkt.options
-    del pkt.chksum
-    del pkt[TCP].chksum
-    return pkt
+def dump_data(pkts = None):
+    global settings
+    if pcap == False:
+        return;
+    if pkts is None:
+        scapy.wrpcap("dyndump.pcap", settings.plist)
+    else
+        scapy.wrpcap("dyndump.pcap", pkts)
 
-def create_ack(pkt):
-    layer_ip = IP(src=pkt[IP].dst, dst=pkt[IP].src)
-    layer_tcp = TCP(dport=pkt[TCP].sport, sport=pkt[TCP].dport, flags='A', seq=pkt[TCP].ack, ack=psh[TCP].seq + len(pkt[TCP].load))
-    pkt_ack = ip_layer/tcp_layer
-    return pkt_ack
+def psh(pkt = None, payload = h""):
+    if len(payload) == 0 or pkt is None:
+        return;
+    forge = pkt
+    forge.load = payload
+    del forge.len
+    del forge.options
+    del forge.chksum
+    del forge[TCP].chksum
+    return forge;
 
-def send(pkt):
+def ack(pkt = None):
+    if pkt is None:
+        return;
+    layer_ip    = IP(
+            src     = pkt[IP].dst,
+            dst     = pkt[IP].src
+    )
+    layer_tcp   = TCP(
+            dport   = pkt[TCP].sport,
+            sport   = pkt[TCP].dport,
+            flags   = 'A',
+            seq     = pkt[TCP].ack,
+            ack     = pkt[TCP].seq + len(pkt[TCP].load),
+    return layer_ip/tcp_layer;
+
+def send(pkt = None):
+    if pkt is None:
+        return;
     sendp(pkt, verbose=False)
 
 def receive():
     def thread():
         while True:
-            response = sniffer.current_response
-            while sniffer.current_response == response and not kill:
-                time.sleep(0.1)
-            response = sniffer.current_response
-            if kill:
-                return
-            print(response.load.decode(), end="")
+            # print response receive ?
+            print(, end="")
     threading.Thread(target=thread).start()
