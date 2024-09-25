@@ -4,28 +4,44 @@ from libs import injector, packet as lpkt
 from libs import logger
 from scapy.all import *
 
+# Get the logger instance from logger
 log = logger.settings.logger
 
 class settings:
+    #Network interface VAR
     iface   = ""
+    #Mac adress ti be used dureing packet inject/sniffing
     mac     = ""
+    #Event object to signal when to stop sniffing
     stop    = threading.Event()
+    #Scapy packet list to hold sniffed packets
     plist   = scapy.plist.PacketList()
+    #Boolen to known if we stock in .pcap file or not
     pcap    = False
+    #Bool to know if packet has been injected
     injected= False
+    #Bool to know if the sniffer is curently running
     running = True
+    #Var for the src IP
     src     = ""
+    #Var for the dst IP
     dst     = ""
+    #Var for the destination PORT
     port    = ""
 
 # Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
+    #Function to handle each packet that is sniffed
     def sniff(pkt):
+        #Access the global settings object
         global settings
 #        pkt.show()
 #        print("packet received")
+
+        # Add the sniffed packet to the event queue for processing by injector
         injector.settings.proto.events.add_queue(pkt);
 
+#-------------------------------------------------------------------------------------
 #        if pkt[IP].src == settings.dst:
 #            print("Server: " +str(pkt[TCP].flags))
 #        if pkt[IP].src == sniff_settings.src:
@@ -50,11 +66,21 @@ class sniffer:
 #            settings.psh = 0
 #            settings.packet_sent = True
             # send request query to server
-
+#--------------------------------------------------------------------------------------
+    
+    # Sniffer class that starts packet sniffing
     def __init__(self):
+        # Access global settings 
         global settings
+        #Inform the user that sniffing has started
         print('sniffing on iface {} port {}...', settings.iface, settings.port)
-        plist = sniff(prn=sniffer.sniff, iface=settings.iface, filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", stop_filter=lambda p: settings.stop.is_set())
+        
+        #Scapy sniff function to start capturing packet
+        plist = sniff(prn=sniffer.sniff,# Function that call for each packet captured 
+                      iface=settings.iface, 
+                      filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", 
+                      stop_filter=lambda p: settings.stop.is_set())
+        #Set running to false when sniffing is done
         settings.running = False
         if settings.pcap == True:
             if len(settings.plist) != 0:
