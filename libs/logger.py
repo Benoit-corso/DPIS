@@ -15,12 +15,20 @@ class logger:
             print("{}: {}", key, value)
 
     # print packetlist infos like tcpdump
-    def packetlist(pkt):
-        True
+    def packetlist(pkts = None):
+        global settings
+        if pkts is None:
+            return;
+        elif settings.level > 2:
+            pkts.hexraw()
         
     # print packet info
-    def packet(pkt):
-        pkt.show2()
+    def packet(pkt = None):
+        global settings
+        if pkts is None:
+            return;
+        elif settings.level > 1:
+            pkt.show2()
 
     def __init__(self):
         global settings

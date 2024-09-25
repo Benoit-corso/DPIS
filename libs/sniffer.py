@@ -4,17 +4,18 @@ from libs import packet as lpkt
 from scapy.all import *
 
 class settings:
+    iface   = ""
     stop    = threading.Event()
     plist   = scapy.plist.PacketList()
-    running = True
     pcap    = False
+    injected= False
+    running = True
     src     = ""
     dst     = ""
     port    = ""
     psh     = 0
     ack     = 0
     syn     = 0
-    data    = []
 
 # Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
@@ -48,7 +49,7 @@ class sniffer:
     def __init__(self):
         global settings
         print("sniffing...")
-        plist = sniff(prn=sniffer.sniff, filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", stop_filter=lambda p: sniff_settings.stop.is_set())
+        plist = sniff(prn=sniffer.sniff, iface=settings.iface, filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", stop_filter=lambda p: sniff_settings.stop.is_set())
         settings.running = False
         if settings.pcap == True:
             if len(settings.plist) != 0:
@@ -62,14 +63,15 @@ def stop():
     settings.stop.set()
 
 # Setup and start sniffing into a multi-threaded context
-def start(src, dst, port, pcap = False):
+def start(src, dst, port, iface, pcap = False):
     global settings
 
     settings.src    = src
     settings.dst    = dst
     settings.port   = port
+    settings.iface  = iface
     # boolean for writing into a pcap
     settings.pcap   = pcap
-    
+   
     print("sniffer is starting!")
     threading.Thread(target=sniffer).start()

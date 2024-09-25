@@ -1,4 +1,5 @@
 from libs import packet as lpkt
+from libs import sniffer
 from libs import logger
 
 class settings:
@@ -12,6 +13,8 @@ class injector:
 
     # inject packet from proto
     def inject(pkt):
+        logger.settings.inject = True
+        lpkt.send(pkt)
         True
 
     def __init__(self):
@@ -23,4 +26,4 @@ def init(proto = None):
         # actually don't have simple tcp session handler
         print("can't use injector without protocol.")
         return;
-    settings.proto = importlib.import_module("libs.proto"+proto)
+    settings.proto = importlib.import_module("libs.proto."+proto)

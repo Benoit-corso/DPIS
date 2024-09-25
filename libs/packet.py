@@ -6,7 +6,7 @@ def append_packet(pkt = None):
     global settings
     if pkt is None:
         return;
-    settings.plist.append(pkt)
+    sniffer.settings.plist.append(pkt)
 
 # Dump datas to a pcap file
 def dump_data(pkts = None, filename = None):
@@ -46,6 +46,16 @@ def ack(pkt = None):
             ack     = pkt[TCP].seq + len(pkt[TCP].load)
     )
     return layer_ip/tcp_layer;
+
+def syn(pkt = None):
+    if pkt is None:
+        return;
+    True
+
+def fin(pkt = None):
+    if pkt is None:
+        return;
+    True
 
 # send a packet
 def send(pkt = None):
