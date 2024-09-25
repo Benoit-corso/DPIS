@@ -1,8 +1,0 @@
-
-49 00 00	= Packet length
-02		= Packet Number
-ff		= Response Code: ERR Packet (0xff)
-15 04		= Error Code (1045)
-23		= # (Padding / Packet separation)
-32 38 30 30 30	= SQL State
-.. .. .. .. ..  = Error Message
