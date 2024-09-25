@@ -3,7 +3,9 @@ from scapy.all import *
 class settings:
     level   = 0
 
+# This class isn't multi threaded
 class logger:
+    # print args and key/value args
     def print(*args, **kargs):
         global settings
         if settings.level == 0:
@@ -12,9 +14,10 @@ class logger:
         for key, value in kargs.items():
             print("{}: {}", key, value)
 
+    # print packetlist infos like tcpdump
     def packetlist(pkt):
         
-
+    # print packet info
     def packet(pkt):
         pkt.show2()
 

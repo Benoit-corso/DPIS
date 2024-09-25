@@ -16,6 +16,7 @@ class settings:
     syn     = 0
     data    = []
 
+# Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
     def sniff(pkt):
         global settings
@@ -55,16 +56,19 @@ class sniffer:
             else
                 lpkt.dump_data(plist)
 
+# Define stop hook function for sniffing
 def stop():
     global settings
     settings.stop.set()
 
+# Setup and start sniffing into a multi-threaded context
 def start(src, dst, port, pcap = False):
     global settings
 
     settings.src    = src
     settings.dst    = dst
     settings.port   = port
+    # boolean for writing into a pcap
     settings.pcap   = pcap
     
     print("sniffer is starting!")

@@ -93,6 +93,7 @@ def main():
                 print("Invalid mac address!")
                 exit()
             print("arp spoofing mac, sleeping 5seconds")
+
     # TODO: Delete this rule after program is running
     #print("trying:")
     #print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
@@ -105,7 +106,6 @@ def main():
         #os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #spoofer.start(settings.ip, settings.src, settings.dst)
-        time.sleep(5)
     #injector.init()
     sniffer.start(settings.src, settings.dst, settings.port)
     if sniffer.inject_packet is None:

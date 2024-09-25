@@ -3,26 +3,31 @@ import time
 import threading
 from libs import packet as lpacket
 
-class spoof_settings:
+class settings:
     mac = ""
     src = ""
     dst = ""
     stop = threading.Event()
     terminate = False
 
+# execute arp spoofing (is Multi-threaded)
 class spoofer:
     def __init__(self):
-        global spoof_settings
+        global settings
 
+# A hook function to stop arp spoofing
 def stop():
-    global spoof_settings
-    spoof_settings.stop.set()
+    global settings
+    settings.stop.set()
 
+# Setup and execute arp spoofing
 def start(mac, src, dst):
-    global spoof_settings
-    spoof_settings.mac = mac
-    spoof_settings.src = src
-    spoof_settings.dst = dst
+    global settings
+
+    settings.mac = mac
+    settings.src = src
+    settings.dst = dst
+
     threading.Thread(target=spoofer).start()
-    while not spoof_settings.terminate:
-        True
+    print("Arp spoofing started. Waiting 5 seconds before continue..."
+    time.sleep(5)

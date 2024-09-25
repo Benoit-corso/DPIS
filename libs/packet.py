@@ -1,21 +1,24 @@
 from scapy.all import *
 from libs import sniffer
 
+# Append a packet to the list
 def append_packet(pkt = None):
     global settings
     if pkt is None:
         return;
     settings.plist.append(pkt)
 
-def dump_data(pkts = None):
+# Dump datas to a pcap file
+def dump_data(pkts = None, filename = None):
     global settings
     if pcap == False:
         return;
     if pkts is None:
-        scapy.wrpcap("dyndump.pcap", settings.plist)
+        scapy.wrpcap(if filename is None "dyndump.pcap" else filename, settings.plist)
     else
-        scapy.wrpcap("dyndump.pcap", pkts)
+        scapy.wrpcap(if filename is None "dyndump.pcap" else filename, pkts)
 
+# Create a psh packet
 def psh(pkt = None, payload = h""):
     if len(payload) == 0 or pkt is None:
         return;
@@ -27,6 +30,7 @@ def psh(pkt = None, payload = h""):
     del forge[TCP].chksum
     return forge;
 
+# Create an ack packet
 def ack(pkt = None):
     if pkt is None:
         return;
@@ -42,11 +46,14 @@ def ack(pkt = None):
             ack     = pkt[TCP].seq + len(pkt[TCP].load),
     return layer_ip/tcp_layer;
 
+# send a packet
 def send(pkt = None):
     if pkt is None:
         return;
     sendp(pkt, verbose=False)
 
+# Should be a hook function when a response is recieved
+# Actually disabled, this function should be into proto.????
 def receive():
     def thread():
         while True:
