@@ -5,7 +5,7 @@ import time
 import sys
 import os
 import re
-from libs import spoofing
+from libs import injector, spoofing
 from libs import sniffer
 from libs import logger
 from libs import packet
@@ -92,7 +92,7 @@ def main():
         if len(args.own) != 0:
             settings.ip = args.own.split(":")[0]
             settings.mac = args.own.split(":")[1]
-            if not mac_reg.match(own_mac):
+            if not mac_reg.match(settings.mac):
                 print("Invalid mac address!")
                 exit()
             print("arp spoofing mac, sleeping 5seconds")

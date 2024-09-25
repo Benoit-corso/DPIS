@@ -1,6 +1,6 @@
 import time
 import threading
-from libs import packet as lpkt
+from libs import injector, packet as lpkt
 from scapy.all import *
 
 class settings:
@@ -13,14 +13,12 @@ class settings:
     src     = ""
     dst     = ""
     port    = ""
-    psh     = 0
-    ack     = 0
-    syn     = 0
 
 # Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
     def sniff(pkt):
         global settings
+        injector.settings.proto.add_queue(pkt)
 #        if pkt[IP].src == settings.dst:
 #            print("Server: " +str(pkt[TCP].flags))
 #        if pkt[IP].src == sniff_settings.src:

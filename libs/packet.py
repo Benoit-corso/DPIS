@@ -11,10 +11,10 @@ def append_packet(pkt = None):
 # Dump datas to a pcap file
 def dump_data(pkts = None, filename = None):
     global settings
-    if pcap == False:
+    if sniffer.settings.pcap == False:
         return;
     if pkts is None:
-        scapy.wrpcap(("dyndump.pcap" if filename is None else filename), settings.plist)
+        scapy.wrpcap(("dyndump.pcap" if filename is None else filename), sniffer.settings.plist)
     else:
         scapy.wrpcap(("dyndump.pcap" if filename is None else filename), pkts)
 
@@ -45,7 +45,7 @@ def ack(pkt = None):
             seq     = pkt[TCP].ack,
             ack     = pkt[TCP].seq + len(pkt[TCP].load)
     )
-    return layer_ip/tcp_layer;
+    return layer_ip/layer_tcp;
 
 def syn(pkt = None):
     if pkt is None:

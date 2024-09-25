@@ -7,9 +7,10 @@ class mysql:
     events = None
 
     def __init__(self):
-        events = injector.Events()
+        self.events = injector.Events()
 
 def init():
     global mysql
     proto = mysql()
     threading.Thread(target=proto.events.check_conditions).start()
+    return proto;

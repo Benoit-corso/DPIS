@@ -1,3 +1,4 @@
+import importlib
 from scapy.all import *
 from libs import packet as lpkt
 from libs import sniffer
@@ -12,6 +13,7 @@ class Events:
     # eventname: Condition
     # Condition: Callback
     conditions  = {}
+    PacketQueue = []
     syn         = 0
     psh         = 0
     ack         = 0
@@ -23,30 +25,39 @@ class Events:
         ack = 0
         fin = 0
 
-    def add_event(name, callback, *conditions):
-        wrapper = create_wrapper(name, conditions, callback);
-        events[name] = wrapper
+    def add_event(self, name, callback, *conditions):
+        wrapper = self.create_wrapper(name, conditions, callback);
+        self.events[name] = wrapper
         for cond in conditions:
             conditions[cond] = wrapper
     
-    def create_wrapper(name, conditions, callback):
+    def create_wrapper(self, name, callback):
         def wrapper(pkt):
             if logger.settings.level > 1:
                 print(name + "was called!")
             return callback(pkt);
         return wrapper;    
     
-    def check_conditions(pkt):
+    def add_queue(self, pkt = None):
+        if pkt is None:
+            return;
+        self.PacketQueue.push(pkt)
+
+    def check_conditions(self):
+        pkt = None
         while True:
-            while key, value in conditions.items():
-                if eval(key, {
-                    'pkt': pkt,
-                    'syn': syn,
-                    'psh': psh,
-                    'ack': ack,
-                    'fin': fin
-                }) == True:
-                    value(pkt)
+            if pkt is not None:
+                for key, value in self.conditions.items():
+                    if eval(key, {
+                        'pkt': pkt,
+                        'syn': self.syn,
+                        'psh': self.psh,
+                        'ack': self.ack,
+                        'fin': self.fin
+                    }) == True:
+                        value(pkt)
+            elif len(self.PacketQueue) != 0:
+                pkt = self.PacketQueue.pop(0)
     
     def __init__(self):
         return self;
@@ -69,5 +80,4 @@ def init(proto = None):
         # actually don't have simple tcp session handler
         print("can't use injector without protocol.")
         return;
-    settings.proto = importlib.import_module("libs.proto."+proto)
-    settings.proto.init()
+    settings.proto = importlib.import_module("libs.proto."+proto).init()
