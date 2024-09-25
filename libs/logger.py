@@ -16,6 +16,7 @@ class logger:
 
     # print packetlist infos like tcpdump
     def packetlist(pkt):
+        True
         
     # print packet info
     def packet(pkt):

@@ -50,7 +50,7 @@ def main():
     parser.add_argument("--verbose",
                         help="Display more informations",
                         default=0, 
-                        choices=[0, 1, 2,3]
+                        choices=[0, 1, 2, 3],
                         type=int)
 
     parser.set_defaults(firewall=True)
@@ -100,6 +100,7 @@ def main():
     #os.system("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
     #settings.cmd_list.append("iptables -D POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
     if args.own is not None and len(settings.ip) == 0:
+        True
         #print("trying:")
         #print("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         # TODO: Delete this rule after program is running

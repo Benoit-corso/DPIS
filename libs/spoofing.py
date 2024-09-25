@@ -29,5 +29,5 @@ def start(mac, src, dst):
     settings.dst = dst
 
     threading.Thread(target=spoofer).start()
-    print("Arp spoofing started. Waiting 5 seconds before continue..."
+    print("Arp spoofing started. Waiting 5 seconds before continue...")
     time.sleep(5)

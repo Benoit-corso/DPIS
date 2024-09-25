@@ -14,12 +14,12 @@ def dump_data(pkts = None, filename = None):
     if pcap == False:
         return;
     if pkts is None:
-        scapy.wrpcap(if filename is None "dyndump.pcap" else filename, settings.plist)
-    else
-        scapy.wrpcap(if filename is None "dyndump.pcap" else filename, pkts)
+        scapy.wrpcap(("dyndump.pcap" if filename is None else filename), settings.plist)
+    else:
+        scapy.wrpcap(("dyndump.pcap" if filename is None else filename), pkts)
 
 # Create a psh packet
-def psh(pkt = None, payload = h""):
+def psh(pkt = None, payload = ""):
     if len(payload) == 0 or pkt is None:
         return;
     forge = pkt
@@ -43,7 +43,8 @@ def ack(pkt = None):
             sport   = pkt[TCP].dport,
             flags   = 'A',
             seq     = pkt[TCP].ack,
-            ack     = pkt[TCP].seq + len(pkt[TCP].load),
+            ack     = pkt[TCP].seq + len(pkt[TCP].load)
+    )
     return layer_ip/tcp_layer;
 
 # send a packet
@@ -58,5 +59,5 @@ def receive():
     def thread():
         while True:
             # print response receive ?
-            print(, end="")
+            print("", end="")
     threading.Thread(target=thread).start()
