@@ -1,15 +1,14 @@
 from scapy.all import *
 
-class settings:
-    logger  = None
-    level   = 0
+log = None
+loglevel = 0
 
 # This class isn't multi threaded
-class logger:
+class log:
     # print args and key/value args
     def print(*args, **kargs):
-        global settings
-        if settings.level == 0:
+        global loglevel
+        if loglevel == 0:
             return;
         print(*args)
         for key, value in kargs.items():
@@ -17,28 +16,24 @@ class logger:
 
     # print packetlist infos like tcpdump
     def packetlist(pkts = None):
-        global settings
+        global loglevel
         if pkts is None:
             return;
-        elif settings.level > 2:
+        elif loglevel > 2:
             pkts.hexraw()
-        
+
     # print packet info
     def packet(pkt = None):
-        global settings
-        if pkts is None:
+        global loglevel
+        if pkt is None:
             return;
-        elif settings.level > 1:
+        elif loglevel > 1:
             pkt.show2()
 
-    def __init__(self):
-        global settings
-        print("logger initialized with level "+str(settings.level)+".")
-        if settings.logger is None:
-            settings.logger = self
-
-
-def init(level = 1):
-    global settings
-    settings.level = level
-    return logger()
+    def __init__(self, level = 0):
+        global loglevel, log
+        print("logger initialized with level "+str(loglevel)+".")
+        if log is None:
+            log = self
+        else: return;
+        loglevel = level;
