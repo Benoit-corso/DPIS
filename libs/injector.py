@@ -1,19 +1,14 @@
 import importlib
-from scapy.all import *
-from libs import packet as lpkt
-from libs import sniffer
-from libs import logger
+import time
+import scapy.all as scapy
+from threading import Thread, Event
+from libs import packet as lpkt,sniffer,logger as _
 
-# Get he logger instance for print message
-log = logger.settings.logger
-
-# Define settings class to store protocol information
-class settings:
-    # Var to stock the protocol that will be initilized later
-    proto = None
+log = _.log
 
 # Define Event class to manage event s
-class Events:
+class Events(Thread):
+    proto = None
     # eventname: Callback
     # 
     # Dictionnary to store events, where the key is the event name, and the value is the callback function 
@@ -50,8 +45,7 @@ class Events:
         # Inner function thar wraps the original callback
         def wrapper(pkt):
             # If logging level > print the event triggered
-            if logger.settings.level > 1:
-                print("Event: " + name + "was called!")
+            log.print("Event: " + name + "was called!")
             # call the original callback function, with the packet as the arguements
             return callback(pkt);
         # Return the wrapped callback
@@ -66,52 +60,50 @@ class Events:
         self.PacketQueue.append(pkt)
 
     # function that checks conditions againdt queued packets
-    def check_conditions(self):
+    def run(self):
         # Initilisation packet = None
         pkt = None
-        while True:
-            # If packet available for processing
-            if pkt is not None:
-                # loopt throught each condition and its assoiciated callback
-                for key, value in self.conditions.items():
-                    # Evaluate the condition as a Python expression, checking values like flags and IP addresses
-                    if eval(key, {
-                        'pkt': pkt,
-                        'syn': self.syn,
-                        'psh': self.psh,
-                        'ack': self.ack,
-                        'fin': self.fin,
-                        'src': self.src,
-                        'dst': self.dst
-                    }) == True:
-                        # If the condition is met, execute the associated callback with the packet
-                        value(pkt)
-                # reset pkt after processing
-                pkt = None
-            # if packet queu is not empty, get the next pakcet
-            elif len(self.PacketQueue) != 0:
-                # pop the next pakcet from the queue for processing
-                pkt = self.PacketQueue.pop()
+        try:
+            while not self.exit.is_set():
+                # If packet available for processing
+                if pkt is not None:
+                    # loopt throught each condition and its assoiciated callback
+                    for key, value in self.conditions.items():
+                        retval = None
+                        # Evaluate the condition as a Python expression, checking values like flags and IP addresses
+                        retval = eval(key, {
+                            'pkt': pkt,
+                            'syn': self.syn,
+                            'psh': self.psh,
+                            'ack': self.ack,
+                            'fin': self.fin,
+                            'src': self.src,
+                            'dst': self.dst
+                        })
+                        if retval == True:
+                            # If the condition is met, execute the associated callback with the packet
+                            value(pkt)
+                        else: log.print(retval)
+                    # reset pkt after processing
+                    pkt = None
+                # if packet queu is not empty, get the next pakcet
+                elif len(self.PacketQueue) != 0:
+                    # pop the next pakcet from the queue for processing
+                    pkt = self.PacketQueue.pop()
+        except KeyboardInterrupt or self.exit.is_set():
+            log.print("Event thread was stopped.")
+            return;
+
+    # Fire the stop event
+    def stop(self):
+        self.exit.set();
+        log.print("Stopping Event thread, please wait.")
     
-    #initilize rhe events class 
+    #initilize rhe events class
     def __init__(self, src, dst):
-        # call loger functuion for print
-        logger.logger.print("events init")
+        super(Events, self).__init__()
+        # call loger function for print
+        log.print("events init")
+        self.exit = Event()
         self.src = src
         self.dst = dst
-
-# Function to initialize the protocol and the event handling system
-def init(proto = None, src = "", dst = "", mac = ""):
-    # Use global settings object
-    global settings
-    # if no proto, print an error
-    if proto is None:
-        # actually don't have simple tcp session handler
-        log.print("can't use injector without protocol.")
-        return;
-    # Print the protocol
-    logger.logger.print("protocol "+proto+" selected.")
-    #Import the protocol form le libs/proto, and initialize it
-    settings.proto = importlib.import_module("libs.proto."+proto).init(src, dst, mac)
-    # Print message that the logger has been executed
-    logger.logger.print("after logger")

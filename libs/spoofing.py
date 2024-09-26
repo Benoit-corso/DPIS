@@ -1,5 +1,5 @@
-import scapy.all as scapy
 import time
+import scapy.all as scapy
 from threading import Thread, Event
 from libs import logger as _
 
@@ -38,30 +38,31 @@ class spoofer(Thread):
     # Thread routine
     def run(self):
         try:
-            while not self.event.is_set():
+            while not self.exit.is_set():
                 for spoof in self.pkts:
                     scapy.send(spoof, verbose=False)
                 time.sleep(self.delay)
-        except KeyboardInterrupt or self.event.is_set():
+        except KeyboardInterrupt or self.exit.is_set():
             for key in self.targets.keys():
                 self.restore(self.targets.pop(key))
 
     # Start the spoofer
-    def start(self):
-        self.event.clear()
+    def exec(self):
+        self.exit.clear()
+        self.start()
         log.print("ARP Spoofing started, waiting 3,5 seconds...")
         time.sleep(3.5)
 
     # Fire the stop event
     def stop(self):
-        self.event.set();
+        self.exit.set();
         log.print("ARP Spoofing stopping, waiting 1 second...")
         time.sleep(1)
 
     # We know our mac and ip already let save them
     def __init__(self, mac, ip, delay = 1):
         super(spoofer, self).__init__()
-        self.event = Event()
+        self.exit = Event()
         self.hwaddr = mac
         self.addr = ip
         self.delay = delay

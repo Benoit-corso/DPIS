@@ -1,11 +1,10 @@
-from scapy.all import *
-import threading
-from libs import packet as lpkt
-from libs import injector
-from libs import sniffer
-from libs import logger
+import scapy.all as scapy
+from threading import Thread, Event
+from libs import packet as lpkt,injector,sniffer,logger as _
 
-class mysql:
+log = _.log
+
+class protocol:
     # Store the event object
     events = None
 
@@ -13,9 +12,9 @@ class mysql:
     def detect_syn(self, pkt):
         self.events.syn = self.events.syn + 1
         if self.events.syn == 1:
-            self.client_mac = pkt[Ether].src
+            self.client_mac = pkt[scapy.Ether].src
         elif self.events.syn == 2:
-            self.server_mac = pkt[Ether].src
+            self.server_mac = pkt[scapy.Ether].src
 
     # Detect Fin packet, increment for FIN, and reset for all other flags
     def detect_fin(self, pkt):
@@ -41,9 +40,9 @@ class mysql:
         # sned an ACK pakct in response to received packet
         lpkt.send(lpkt.ack(pkt))
         # Construct the source packet
-        error = Ether(src=sniffer.settings.mac,dst=self.client_mac)/lpkt.ack(error)
+        error = scapy.Ether(src=sniffer.settings.mac,dst=self.client_mac)/lpkt.ack(error)
         # Print the error packet
-        logger.packet(error)
+        log.packet(error)
         # Send the error packet
         lpkt.send(error)
     
@@ -62,7 +61,7 @@ class mysql:
         # Store our Mac Adress
         self.mac = mac
         # Print Mac adresse 
-        logger.logger.print("SRV MAC : "+self.server+"\nCLIENT MAC : "+self.client+"\OWN MAC : "+self.mac)
+        log.print("SRV IP: "+self.server+"\nCLIENT IP: "+self.client+"\OWN MAC : "+self.mac)
         
         # Detect Syn Packet
         self.events.add('detect syn', self.detect_syn, [
@@ -82,19 +81,12 @@ class mysql:
         ])
         # Send error pack if the condition are met
         self.events.add('send error', self.send_error, [
-            "syn == 2 && psh == 2 && ack == 5",
+            'syn == 2 && psh == 2 && ack == 5',
         ])
         # Register envent to send a request packet (Work in progress)
         self.events.add('send request', self.send_request, [
             "",
         ])
-        # Start new thread for check the conditons on the pakcet
-        threading.Thread(target=self.events.check_conditions).start()
-        # Check the theard is stated
-        logger.logger.print("condition loop thread started")
-
-# function to initialise the mysql proto
-def init(src, dst, mac):
-    # Create the instance for the mysql proto
-    proto = mysql(src, dst, mac)
-    return proto;
+        self.events.start()
+        # Check the thread is stated
+        log.print("condition loop thread started")

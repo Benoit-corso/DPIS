@@ -1,45 +1,22 @@
 import time
-import threading
-from libs import injector, packet as lpkt
-from libs import logger
-from scapy.all import *
+from threading import Thread, Event
+import scapy.all as scapy
+from libs import injector, packet as lpkt,logger as _
 
 # Get the logger instance from logger
-log = logger.settings.logger
-
-class settings:
-    #Network interface VAR
-    iface   = ""
-    #Mac adress ti be used dureing packet inject/sniffing
-    mac     = ""
-    #Event object to signal when to stop sniffing
-    stop    = threading.Event()
-    #Scapy packet list to hold sniffed packets
-    plist   = scapy.plist.PacketList()
-    #Boolen to known if we stock in .pcap file or not
-    pcap    = False
-    #Bool to know if packet has been injected
-    injected= False
-    #Bool to know if the sniffer is curently running
-    running = True
-    #Var for the src IP
-    src     = ""
-    #Var for the dst IP
-    dst     = ""
-    #Var for the destination PORT
-    port    = ""
+log = _.log
+plist = None
+pcapname = None
 
 # Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
     #Function to handle each packet that is sniffed
-    def sniff(pkt):
+    def sniff(self, pkt):
         #Access the global settings object
-        global settings
 #        pkt.show()
 #        print("packet received")
-
         # Add the sniffed packet to the event queue for processing by injector
-        injector.settings.proto.events.add_queue(pkt);
+        self.proto.events.add_queue(pkt);
 
 #-------------------------------------------------------------------------------------
 #        if pkt[IP].src == settings.dst:
@@ -69,41 +46,30 @@ class sniffer:
 #--------------------------------------------------------------------------------------
     
     # Sniffer class that starts packet sniffing
-    def __init__(self):
-        # Access global settings 
-        global settings
+    def __init__(self, src, dst, port, iface, proto, mac, pcap):
+        global pcapname, plist
+        log.print("sniffer is starting!")
+        # Access global settings
+        self.src    = src
+        self.dst    = dst
+        self.port   = port
+        self.iface  = iface
+        # boolean for writing into a pcap
+        pcapname    = pcap
+        self.mac    = mac
+        self.proto  = proto
         #Inform the user that sniffing has started
-        print('sniffing on iface {} port {}...', settings.iface, settings.port)
+        print("sniffing on iface {} port {}...", self.iface, self.port)
         
         #Scapy sniff function to start capturing packet
-        plist = sniff(prn=sniffer.sniff,# Function that call for each packet captured 
-                      iface=settings.iface, 
-                      filter=f"tcp port {settings.port} and (host {settings.dst} and host {settings.src})", 
-                      stop_filter=lambda p: settings.stop.is_set())
+        sniffplist = scapy.sniff(prn=sniffer.sniff,# Function that call for each packet captured 
+                      iface=self.iface, 
+                      filter=f"tcp port {self.port} and (host {self.dst} and host {self.src})", 
+                      stop_filter=lambda p: self.stop.is_set())
         #Set running to false when sniffing is done
-        settings.running = False
-        if settings.pcap == True:
-            if len(settings.plist) != 0:
-                lpkt.dump_data(settings.plist)
-            else:
+        self.running = False
+        if self.pcap == True:
+            if len(plist) != 0:
                 lpkt.dump_data(plist)
-
-# Define stop hook function for sniffing
-def stop():
-    global settings
-    settings.stop.set()
-
-# Setup and start sniffing into a multi-threaded context
-def start(src, dst, port, iface, mac, pcap = False):
-    global settings
-
-    settings.src    = src
-    settings.dst    = dst
-    settings.port   = port
-    settings.iface  = iface
-    # boolean for writing into a pcap
-    settings.pcap   = pcap
-    settings.mac    = mac
-   
-    logger.logger.print("sniffer is starting!")
-    threading.Thread(target=sniffer).start()
+            else:
+                lpkt.dump_data(sniffplist)
