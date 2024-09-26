@@ -36,9 +36,9 @@ class Events(Thread):
     def add(self, name, callback, *conditions):
         wrapper = self.create_wrapper(name, callback);
         self.events[name] = wrapper
-        for key, value in self.conditions.items():
-            print(key, "added for: ", name)
-            self.conditions[key] = wrapper
+        for cond in conditions:
+            print(cond, "added for: ", name)
+            self.conditions[cond] = wrapper
     
     # function to create a wrapperr for the event callback
     def create_wrapper(self, name, callback):
@@ -47,7 +47,7 @@ class Events(Thread):
             # If logging level > print the event triggered
             log.print("Event: " + name + "was called!")
             # call the original callback function, with the packet as the arguements
-            return callback(pkt);
+            return callback(name, pkt);
         # Return the wrapped callback
         return wrapper;    
     

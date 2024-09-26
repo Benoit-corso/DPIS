@@ -9,7 +9,7 @@ class protocol:
     events = None
 
     # Dectect SYN packets and increment
-    def detect_syn(self, pkt):
+    def detect_syn(self, name, pkt):
         self.events.syn = self.events.syn + 1
         if self.events.syn == 1:
             self.client_mac = pkt[scapy.Ether].src
@@ -17,22 +17,22 @@ class protocol:
             self.server_mac = pkt[scapy.Ether].src
 
     # Detect Fin packet, increment for FIN, and reset for all other flags
-    def detect_fin(self, pkt):
+    def detect_fin(self, name, pkt):
         self.events.ack = 0
         self.events.psh = 0
         self.events.syn = 0
         self.events.fin = self.events.fin + 1
 
     # Detect ACK packet and increment 
-    def detect_ack(self, pkt):
+    def detect_ack(self, name, pkt):
         self.events.ack = self.events.ack + 1
 
     # Detect PA (PSH) Packet and increment
-    def detect_psh(self, pkt):
+    def detect_psh(self, name, pkt):
         self.events.psh = self.events.psh + 1
 
     # Construct and send error packet
-    def send_error(self, pkt):
+    def send_error(self, name, pkt):
         # Creat an error packet based on received packet
         error = lpkt.psh(pkt)
         # Modify the payload to send error message
@@ -47,7 +47,7 @@ class protocol:
         lpkt.send(error)
     
     # WORK IN PROGRESS, sending the resquest packet
-    def send_request(self, pkt):
+    def send_request(self, name, pkt):
         True
 
     def stop(self):
