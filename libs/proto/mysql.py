@@ -50,6 +50,9 @@ class protocol:
     def send_request(self, pkt):
         True
 
+    def stop(self):
+        self.events.stop()
+
     # Initialize the MYSQL protocol
     def __init__(self, src, dst, mac):
         # Initialize the event handler with the source and distination IP Addresses
@@ -61,7 +64,7 @@ class protocol:
         # Store our Mac Adress
         self.mac = mac
         # Print Mac adresse 
-        log.print("SRV IP: "+self.server+"\nCLIENT IP: "+self.client+"\OWN MAC : "+self.mac)
+        log.print("SERVER:\t"+self.server+"\nCLIENT:\t"+self.client+"\nHOST:\t"+self.mac)
         
         # Detect Syn Packet
         self.events.add('detect syn', self.detect_syn, [

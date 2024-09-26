@@ -15,12 +15,17 @@ import re
 import scapy.all as scapy
 from libs import injector, spoofing,sniffer as sniff,logger,packet as lpkt
 
-sniffer = None
+log         = None
+sniffer     = None
+spoofer     = None
+protocol    = None
+mac         = ""
+ip          = ""
 
 # define our main fonction
 def main():
     # import global settings(get all Var)
-    global settings, log, ip, mac, sniffer
+    global settings, log, ip, mac, sniffer, spoofer, protocol
     print ("""
         █▐▒▒░░■·  ▀█▀    ▀█▀ ▀███   ▀██▀ mitm
         █      ■·  ▀▀▌   █▀   ████   ██
@@ -70,7 +75,7 @@ def main():
     parser.set_defaults(firewall=True)
     # parse command-line argument
     args = parser.parse_args()
-    log = logger.log(args.verbose | 0)
+    log = logger.log(args.verbose)
         
 
 #Regular expression for IP, MAC ant Port validation
@@ -140,7 +145,7 @@ def main():
     # initialize packet injection
     proto_name = "mysql" if len(proto) == 0 else proto
     log.print("protocol "+proto_name+" selected.")
-    proto = importlib.import_module("libs.proto."+proto_name).protocol(src, dst, mac)
+    protocol = importlib.import_module("libs.proto."+proto_name).protocol(src, dst, mac)
     log.print("protocol was started.")
     #Start the sniffing packets
     sniffer = sniff.sniffer(src, dst, port, iface, proto_name, mac, args.write)
@@ -156,13 +161,19 @@ def main():
 
 # Def the exit fonction on Ctrl+C
 def on_exit(*_):
-    global sniffer
+    global sniffer, spoofer, protocol
     print("Killing threads and exiting...")
-    # Stop Sniffing
-    sniffer.stop()
+    if sniffer is not None:
+        # Stop Sniffing
+        sniffer.stop()
+    if protocol is not None:
+        protocol.stop()
+    if spoofer is not None:
+        spoofer.stop()
+
     # Remove any iptables rules
-    for cmd in settings.cmd_list:
-        os.system(cmd)
+    #for cmd in settings.cmd_list:
+    #    os.system(cmd)
     # Exit program
     sys.exit()
 

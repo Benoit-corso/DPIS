@@ -32,8 +32,8 @@ class log:
 
     def __init__(self, level = 0):
         global loglevel, log
+        loglevel = level;
         print("logger initialized with level "+str(loglevel)+".")
         if log is None:
             log = self
         else: return;
-        loglevel = level;

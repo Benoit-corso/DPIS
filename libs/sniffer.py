@@ -17,7 +17,10 @@ class sniffer:
 #        print("packet received")
         # Add the sniffed packet to the event queue for processing by injector
         self.proto.events.add_queue(pkt);
-
+        if (pkt[scapy.IP].src) == self.src:
+            log.print("client send packet. ("+self.src+")")
+        if (pkt[scapy.IP].src) == self.dst:
+            log.print("server send packet. ("+self.dst+")")
 #-------------------------------------------------------------------------------------
 #        if pkt[IP].src == settings.dst:
 #            print("Server: " +str(pkt[TCP].flags))
@@ -44,11 +47,14 @@ class sniffer:
 #            settings.packet_sent = True
             # send request query to server
 #--------------------------------------------------------------------------------------
-    
+    def stop(self):
+        self.exit.set()
+
     # Sniffer class that starts packet sniffing
     def __init__(self, src, dst, port, iface, proto, mac, pcap):
         global pcapname, plist
         log.print("sniffer is starting!")
+        self.exit   = Event()
         # Access global settings
         self.src    = src
         self.dst    = dst
@@ -59,13 +65,13 @@ class sniffer:
         self.mac    = mac
         self.proto  = proto
         #Inform the user that sniffing has started
-        print("sniffing on iface {} port {}...", self.iface, self.port)
+        print("sniffing on iface {} port {}...".format(self.iface, self.port))
         
         #Scapy sniff function to start capturing packet
         sniffplist = scapy.sniff(prn=sniffer.sniff,# Function that call for each packet captured 
                       iface=self.iface, 
                       filter=f"tcp port {self.port} and (host {self.dst} and host {self.src})", 
-                      stop_filter=lambda p: self.stop.is_set())
+                      stop_filter=lambda p: self.exit.is_set())
         #Set running to false when sniffing is done
         self.running = False
         if self.pcap == True:
