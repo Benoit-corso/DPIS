@@ -88,7 +88,7 @@ class protocol:
         ])
         # Register envent to send a request packet (Work in progress)
         self.events.add('send request', self.send_request, [
-            "",
+            "False",
         ])
         self.events.start()
         # Check the thread is stated
