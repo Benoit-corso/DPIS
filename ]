@@ -18,6 +18,7 @@ class Events(Thread):
     # Condition: Callback
     
     #Dictionnary to store conditoon, where the key is the cond, and the value == callback when conditon has been met
+    conditions  = {}
     PacketQueue = []
     syn         = 0
     psh         = 0
@@ -33,44 +34,38 @@ class Events(Thread):
 
     # Function to add a new event with the callback and optional condtions
     def add(self, name, callback, *conditions):
-        [wrapper, add_condition] = self.create_wrapper(name, callback);
+        wrapper = self.create_wrapper(name, callback);
         self.events[name] = wrapper
         for cond in conditions:
-            for c in cond:
-                add_condition(c)
+            print(cond, "added for: ", name)
+            self.conditions[cond] = wrapper
     
     # function to create a wrapperr for the event callback
     def create_wrapper(self, name, callback):
         global log
-        conditions = []
         # Inner function thar wraps the original callback
         def wrapper(pkt):
-            for cond in conditions:
-                retval = eval(cond, {
-#                    'pkt': pkt,
-#                    'eth': pkt[scapy.Ether],
-                    'tcp': pkt[scapy.TCP],
-#                    'udp': pkt[scapy.UDP],
-#                    'ip' : pkt[scapy.IP],
-                    'syn': self.syn,
-                    'psh': self.psh,
-                    'ack': self.ack,
-                    'fin': self.fin,
-#                    'src': self.src,
-#                    'dst': self.dst
-                    })
-                if retval == True:
-#                        log.print(name + " was fired")
-                        return callback(name, pkt)
-        def add_condition(cond):
-            conditions.append(cond)
-            log.print("{} was added for {}".format(cond, name))
+            conditions = []
+            def check(condpkt):
+                for cond in conditions:
+                    if eval(cond, {
+                        'pkt': pkt,
+                        'syn': self.syn,
+                        'psh': self.psh,
+                        'ack': self.ack,
+                        'fin': self.fin,
+                        'src': self.src,
+                        'dst': self.dst
+                        }):
+                            log.print(name + "was fired")
+                            callback(name, condpkt)
             # If logging level > print the event triggered
-#            log.print("Event: " + name + "was called!")
+            log.print("Event: " + name + "was called!")
             # call the original callback function, with the packet as the arguements
-#            return callback(name, pkt);
+            return callback(name, pkt);
+
         # Return the wrapped callback
-        return [wrapper, add_condition];    
+        return wrapper;    
     
     # function to add a packet to the processing queuez
     def add_queue(self, pkt = None):
@@ -86,16 +81,24 @@ class Events(Thread):
         pkt = None
         try:
             while not self.exit.is_set():
-                if len(self.PacketQueue) != 0:
-                    pkt = self.PacketQueue.pop()
                 # If packet available for processing
-                # loopt throught each condition and its assoiciated callback
-                    for name, wrapper in self.events.items():
-                        wrapper(pkt)
-                # reset pkt after processing
+                if pkt is not None:
+                    # loopt throught each condition and its assoiciated callback
+                    for key, value in self.conditions.items():
+                        retval = None
+                        # Evaluate the condition as a Python expression, checking values like flags and IP addresses
+                        retval = eval(key, {
+                        })
+                        if retval == True:
+                            # If the condition is met, execute the associated callback with the packet
+                            value(pkt)
+                        else: log.print(retval)
+                    # reset pkt after processing
+                    pkt = None
                 # if packet queu is not empty, get the next pakcet
+                elif len(self.PacketQueue) != 0:
                     # pop the next pakcet from the queue for processing
-                pkt = None
+                    pkt = self.PacketQueue.pop()
         except KeyboardInterrupt or self.exit.is_set():
             log.print("Event thread was stopped.")
             return;

