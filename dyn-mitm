@@ -117,9 +117,10 @@ def main():
     if args.spoof is not None:
         spoofer = spoofing.spoofer(mac, ip, 0.5)
         for victim in args.spoof.split(':'):
+            log.print("new victim {}".format(victim))
             if not ip_reg.match(victim):
                 log.print('invalid ip {}'.format(victim))
-            else: spoofer.spoof(victim, ip)
+            else: spoofer.spoof(victim, '172.18.255.255')
     spoofer.start()
 
     # initialize packet injection

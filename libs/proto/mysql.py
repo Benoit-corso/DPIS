@@ -11,6 +11,7 @@ class protocol:
     # Dectect SYN packets and increment
     def detect_syn(self, name, pkt):
         self.events.syn = self.events.syn + 1
+        self.events.fin = 0
         #if self.events.syn == 1:
         #    self.client_mac = pkt[scapy.Ether].src
         #elif self.events.syn == 2:
@@ -27,13 +28,14 @@ class protocol:
     # Detect ACK packet and increment 
     def detect_ack(self, name, pkt):
         global log
-        self.events.ack = self.events.ack + 1
-        #log.print("ack:\t{}".format(self.events.ack))
+        if pkt[scapy.TCP].flags != 'F':
+            self.events.ack = self.events.ack + 1
+        log.print("ack:\t{}".format(self.events.ack))
 
     # Detect PA (PSH) Packet and increment
     def detect_psh(self, name, pkt):
         self.events.psh = self.events.psh + 1
-        #log.print("psh:\t{}".format(self.events.psh))
+        log.print("psh:\t{}".format(self.events.psh))
 
     #def send_ack(self, name, pkt):
         # Construct the source packet
@@ -42,16 +44,34 @@ class protocol:
     # Construct and send error packet
     def send_error(self, name, pkt):
         log.print('############### name {} pkt {}'.format(name, pkt))
-        lpkt.send(lpkt.ack(pkt))
+        if pkt[scapy.IP].src != '172.18.0.4':
+            return
+#        lpkt.send(lpkt.ack(pkt))
+        ack = scapy.Ether(src=self.mac,dst='02:42:ac:12:00:03')/scapy.IP(src='172.18.0.2', dst='172.18.0.3')/scapy.TCP(
+            dport   = pkt[scapy.TCP].sport,
+            sport   = pkt[scapy.TCP].dport,
+            flags   = 'A',
+            seq     = pkt[scapy.TCP].ack,
+            ack     = pkt[scapy.TCP].seq
+        )
+        lpkt.send(ack)
         # Create an error packet based on received packet
-        error = lpkt.psh(pkt, "\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29")
+        #error = lpkt.psh(pkt, "\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29")
 #        error.payload = "\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29"
         # sned an ACK pakct in response to received packet
         #lpkt.send(lpkt.ack(pkt))
         # Construct the source packet
-        error = scapy.Ether(src=self.mac,dst=self.client_mac)/lpkt.ack(error)
+        error = scapy.Ether(src=self.mac,dst='02:42:ac:12:00:03')/scapy.IP(src='172.18.0.2', dst='172.18.0.3')/scapy.TCP(
+            dport   = pkt[scapy.TCP].sport,
+            sport   = pkt[scapy.TCP].dport,
+            flags   = 'PA',
+            seq     = pkt[scapy.TCP].ack,
+            #ack     = pkt[scapy.TCP].seq + len(pkt[scapy.TCP].load)
+        ) / scapy.Raw(load="\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29")
+        error.ack     = pkt[scapy.TCP].seq + len(error.load)
         # Print the error packet
-        log.packet(error)
+        #log.packet(error)
+        log.print("payload sent!")
         # Send the error packet
         lpkt.send(error)
     
@@ -89,11 +109,11 @@ class protocol:
         ])
         # Detect PSH packet
         self.events.add('detect psh', self.detect_psh, [
-            "tcp.flags == 'P'",
+            "tcp.flags == 'P' or tcp.flags == 'PA' or tcp.flags == 'AP'",
         ])
         # Send error pack if the condition are met
         self.events.add('send error', self.send_error, [
-            'psh == 2',
+            "ack >= 1 and (tcp.flags == 'P' or tcp.flags == 'PA' or tcp.flags == 'AP')",
         ])
         # Register envent to send a request packet (Work in progress)
         self.events.add('send request', self.send_request, [
