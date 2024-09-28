@@ -1,10 +1,10 @@
 import time
-from threading import Thread, Event
+from threading import Event
 import scapy.all as scapy
-from libs import injector, packet as lpkt,logger as _
+from lib import logger, packet as libpacket
 
 # Get the logger instance from logger
-log = _.log
+log = logger.log
 plist = None
 pcapname = None
 
@@ -77,6 +77,6 @@ class sniffer:
         self.running = False
         if self.pcap == True:
             if len(plist) != 0:
-                lpkt.dump_data(plist)
+                libpacket.dump_data(plist)
             else:
-                lpkt.dump_data(sniffplist)
+                libpacket.dump_data(sniffplist)
