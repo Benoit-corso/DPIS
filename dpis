@@ -1,13 +1,16 @@
 #! /usr/bin/python3
 import importlib
 import argparse
+import importlib.util
 import platform
 import signal
 import sys
 import os
 import re
+import time
 import scapy.all as scapy
-from lib import logger, sniffer as sniff
+from lib import logger as liblog, sniffer as sniff
+from lib.spoofing import Spoofer
 
 # Regex for checking mac address
 r_mac = re.compile('^(([0-9a-f]{2})(:(?!$)|$)){6}$', re.IGNORECASE)
@@ -61,18 +64,18 @@ class DPIS:
     sniffer     = None
     spoofer     = None
     firewall    = None
-    protocol    = None
+    protocol    = []
 
     # host interface we're listening to
     iface       = ""
     # host informations [ip, mac]
     host        = ["", ""]
-    # protocol informations [name, port]
-    proto       = ["", 0]
+    # protocol informations [[name, port]
+    protoinfo   = []
     # gateway informations Target(gateway)
     gateway     = None
-    # target informations (server) Target(server)
-    target      = None
+    # targets List[Target(), ...]
+    targets     = []
     # victims List[Target(), ...]
     victims     = []
     # toggle stdin for incoming datas
@@ -80,35 +83,58 @@ class DPIS:
     # enable socket to intercept datas
     socket      = None
     def __init__(self, iface, proto, target, spoof = False, firewall = False, *_):
-        global r_port;
+        global r_port, log;
         self.iface      = iface
         self.host       = [scapy.get_if_addr(iface), scapy.get_if_hwaddr(iface)]
         log.print("current host informations:\n\tinterface:\t{}\n\tip:\t{}\n\tmac:\t{}".format(iface, self.host[0], self.host[1]))
         self.gateway    = Target(scapy.conf.route.route('0.0.0.0')[2], "gateway")
-        self.target     = Target(target, "server")
-        # Split the port argument into protocol and port
-        self.proto      = proto.split(':')
-        # Make sure Port format is OK
-        if not r_port.match(self.proto[1]):
-            log.print("\x1b[0;31;40mInvalid target port!\x1b[0m")
-            exit(0)
-        else:
-            self.protocol = importlib.import_module("lib.proto."+self.proto[0]).protocol
-            log.print("protocol {} selected on port {}".format(self.proto[0], self.proto[1]))
+        i = 0
+        for t in target:
+            self.target.append(Target(t[0], "target" + str(i) if t[1] is None or len(t[1]) == 0 else t[1]))
+            i = i + 1
+        try:
+            # If multiple protocol was specified, load and initialize every protocol
+            if type(proto[0]) is not list:
+                proto = [proto]
+            for p in proto:
+                # Split the port argument into protocol and port
+                p = p.split(':')
+                # Make sure port format is correct
+                if not r_port.match(p[1]):
+                    log.error("Invalid target port!")
+                    sys.exit(2)
+                self.protoinfo.append(p);
+                self.protocol.append(importlib.util.find_spec("lib", "proto."+p[0]).Protocol(
+                    self.host, self.victims, self.targets, self.gateway, self.stdin
+                ))
+        except:
+            log.error("Protocol {} doesn't exist, please define it or choose another one.".format(self.proto[0]))
+            sys.exit(2)
+        log.debug("protocol {} selected on port {}".format(self.proto[0], self.proto[1]))
         if firewall:
             self.firewall = firewall
         if spoof:
-            self.spoofer = spoof
+            self.spoofer = Spoofer(self.host, 1)
+            for victim in self.victims:
+                self.spoofer.spoof(victim, self.gateway)
+                for target in self.targets:
+                    self.spoofer.spoof(victim, target)
+            for target in self.targets:
+                self.spoofer.spoof(target, self.gateway)
+                for victim in self.victims:
+                    self.spoofer.spoof(target, victim)
+        self.sniffer = sniff.sniffer(self.victims[0], self.targets[0], self.iface, self.protoinfo[0][1], self.protocol)
 
     # Start instances and threads.
     def start(self) -> bool:
+        global log
         self.protocol.start()
         if self.firewall is not None:
             log.print("Enabling firewall rules...")
         if self.spoofer is not None:
             log.print("Starting spoofer, please wait for a while...")
+            self.spoofer.start()
         log.print("Sniffing on port {}".format(self.proto[1]))
-        self.sniffer = sniff.sniffer(self.proto[1])
         self.sniffer.start()
 
     # Stop threads and exit program.
@@ -127,41 +153,39 @@ class DPIS:
         True
 
 # Main function, parses every arguments and return dyn class
-def main():
+def main() -> DPIS:
     os.system('color')
     # import global settings(get all Var)
     global log, r_iadr
-    print ("""\x1b[0;32;40m
-      :::::::::  ::::::::: ::::::::::: :::::::: 
-     :+:    :+: :+:    :+:    :+:    :+:    :+: 
-    +:+    +:+ +:+    +:+    +:+    +:+         
-   +#+    +:+ +#++:++#+     +#+    +#++:++#++   
-  +#+    +#+ +#+           +#+           +#+ by Rmalet, N0x4z3r
- #+#    #+# #+#           #+#    #+#    #+#\x1b[0;33;40m mitm\x1b[0;32;40m
-#########  ###       ########### ########\x1b[0m
+    print ("""
+\x1b[0;92m      :::::::::  ::::::::: ::::::::::: :::::::: 
+\x1b[1;32m     :+:    :+: :+:    :+:    :+:    :+:    :+: 
+\x1b[0;32m    +:+    +:+ +:+    +:+    +:+    +:+         
+\x1b[0;33m   +#+    +:+ +#++:++#+     +#+    +#++:++#++   
+\x1b[1;33m  +#+    +#+ +#+           +#+           +#+ \x1b[0mby \x1b[0;31mN0x4z3r\x1b[0m, \x1b[0;36mRmalet
+\x1b[0;93m #+#    #+# #+#           #+#    #+#    #+#\x1b[0;33;40m mitm
+\x1b[0;93m#########  ###       ########### ########\x1b[0m
 
     Dynamic Protocols Injection and Spoofing
     (called Deep-Peace)""")
-
-    if platform.system() == "Windows":
-        try:
-            import pyuac
-        #    if not pyuac.isUserAdmin():
-        #        print("\x1b[0;31;40mThis program should be run as Administrator.\x1b[0m")
-        #        #rc = pyuac.runAsAdmin()
-        #        exit(1)
-        except Exception as E:
-            if type(E.args[0]) == str and "No module" in E.args[0]:
-                module = E.args[0].split(' ')
-                if "win32con" in module:
-                    module = "'pypiwin32'"
-                print("\x1b[0;31;40mShould install {} on windows platform.\x1b[0m".format(module[len(module) - 1]))
-                print(E)
-            else:
-                print(E)
-            exit(1)
+    #if platform.system() == "Windows":
+    #    try:
+    #        import pyuac
+    #    #    if not pyuac.isUserAdmin():
+    #    #        print("\x1b[0;31;40mThis program should be run as Administrator.\x1b[0m")
+    #    #        #rc = pyuac.runAsAdmin()
+    #    #        exit(1)
+    #    except Exception as E:
+    #        if type(E.args[0]) == str and "No module" in E.args[0]:
+    #            module = E.args[0].split(' ')
+    #            if "win32con" in module:
+    #                module = "'pypiwin32'"
+    #            print("\x1b[0;31;40mShould install {} on windows platform.\x1b[0m".format(module[len(module) - 1]))
+    #        else:
+    #            print(E)
+    #        exit(1)
     # Make sure the script is being run as root
-    elif os.geteuid() != 0:
+    if platform.system() != "Windows" and os.geteuid() != 0:
         print("\x1b[0;31;40mThis program should be run as root.\x1b[0m")
         exit(1)
 
@@ -202,52 +226,64 @@ def main():
     #Arguement for the port destination
     parser.add_argument("protocol", help="Define the protocol and port <name>:<port>")
     #Argument for the ip source
-    parser.add_argument("target", help="Targeted ip address (most of cases server ip address)")
+    parser.add_argument("target", help="List of targets ip address (most of cases server ip address)\n\t\t<target>[,<target>[,...]]")
     #Argument for the ip source
-    parser.add_argument("victims", help="List of victims ip address")
+    parser.add_argument("victim", help="List of victims ip address\n\t\t<victim>[,<victim>[,...]]")
 
     # parse command-line argument
     args = parser.parse_args()
     # Create our logger instance
-    log = logger.log(args.verbose)
+    log = liblog.Logger(args.verbose)
 
     if len(args.iface) == 0:
-        log.print("\x1b[0;31;40mBad argument <iface> got empty value.\x1b[0m")
+        log.error("Bad argument <iface> got empty value.")
         exit(1)
     else:
         ifaces = scapy.get_working_ifaces()
         if not args.iface in ifaces:
-            log.print("\x1b[0;31;40mInterface {} doesn't exist or isn't working. printing valid interfaces:\n\t{}\x1b[0m".format(args.iface, ifaces))
+            log.error("Interface {} doesn't exist or isn't working. printing valid interfaces:\n\t{}".format(args.iface, ifaces))
             exit(1)
 
     if not ":" in args.protocol:
-        log.print("\x1b[0;31;40mBad argument for <protocol> should specify <proto_name>:<port>\x1b[0m")
+        log.error("Bad argument for <protocol> should specify <name>:<port>[, <name>:<port>]")
         exit(1)
 
-    if len(args.target) == 0 or not r_iadr.match(args.target):
-        log.print("\x1b[0;31;40mBad argument for <target>\x1b[0m")
+    if len(args.targets) == 0:
+        log.error("Bad argument for <target>")
         exit(1)
-
-    if ":" in args.victims:
-        args.victims = args.victims.split(":")
-        if len(args.victims) == 0:
-            log.print("\x1b[0;31;40mBad argument for <victims>. Should specify at least one victim.\n\tformat: <victim>:<victim>\x1b[0m")
-            exit(1)
-        else:
-            i = 0
-            for victim in args.victims:
-                if not r_iadr.match(victim):
-                    log.print("\x1b[0;31;40mBad ip address for victim number {}, got: {}\x1b[0m".format(i, victim))
-                    exit(1)
-                i = i + 1
+    elif ',' in args.target:
+        args.target = args.target.split(',');
     else:
-        if not r_iadr.match(args.victims):
-            log.print("\x1b[0;31;40mBad ip address for victim, got: {}\x1b[0m".format(args.victims))
+        args.target = [args.target]
+    i = 0
+    for t in args.target:
+        if not r_iadr.match(t):
+            log.error("Bad <target> number {} got {}".format(str(i), t))
             exit(1)
-        else:
-            args.victims = [args.victims]
+        i = i + 1
 
-    return DPIS(args.iface, args.protocol, args.target, args.spoofing, args.firewall, *args.victims);
+    if len(args.victim) == 0:
+        log.error("Bad argument for <victim>")
+        exit(1)
+    elif "," in args.victim:
+        args.victim = args.victim.split(",")
+    else:
+        args.victim = [args.victim]
+    i = 0
+    for v in args.victim:
+        if not r_iadr.match(v):
+            log.error("Bad <victim> number {} got {}".format(str(i), v))
+            exit(1)
+        i = i + 1
+
+    return DPIS(
+        args.iface,
+        args.protocol,
+        args.target,
+        args.victim,
+        args.spoofing,
+        args.firewall
+    );
     # While the programe is running, accepting stdin process incoming data
     while args.stdin:
         payload = sys.stdin.readline()
@@ -255,6 +291,8 @@ def main():
         lpkt.send(ready)
 
 if __name__ == "__main__":
+    if platform.system() == "Windows":
+        time.sleep(4)
     # Call the main fonction
     program = main()
     # Catch interrupt signal and run exit functions

@@ -1,12 +1,9 @@
-import time
 from threading import Event
 import scapy.all as scapy
-from lib import logger, packet as libpacket
+from lib import logger
 
 # Get the logger instance from logger
 log = logger.log
-plist = None
-pcapname = None
 
 # Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
@@ -16,7 +13,7 @@ class sniffer:
 #        pkt.show()
 #        print("packet received")
         # Add the sniffed packet to the event queue for processing by injector
-        self.proto.events.add_queue(pkt);
+        self.add_queue(pkt);
 #        if (pkt[scapy.IP].src) == self.src:
 #            log.print("client send packet. ("+self.src+")")
 #        if (pkt[scapy.IP].src) == self.dst:
@@ -47,36 +44,28 @@ class sniffer:
 #            settings.packet_sent = True
             # send request query to server
 #--------------------------------------------------------------------------------------
-    def stop(self):
-        self.exit.set()
-
-    # Sniffer class that starts packet sniffing
-    def __init__(self, src, dst, port, iface, protocol, mac, pcap):
-        global pcapname, plist
-        log.print("sniffer is starting!")
-        self.exit   = Event()
-        # Access global settings
-        self.src    = src
-        self.dst    = dst
-        self.port   = port
-        self.iface  = iface
-        # boolean for writing into a pcap
-        pcapname    = pcap
-        self.mac    = mac
-        self.proto  = protocol
-        #Inform the user that sniffing has started
-        print("sniffing on iface {} port {}...".format(self.iface, self.port))
-        
+    def start(self):
         #Scapy sniff function to start capturing packet
-        sniffplist = scapy.sniff(prn=self.sniff,# Function that call for each packet captured 
+        scapy.sniff(prn=self.sniff,# Function that call for each packet captured 
                       iface=self.iface, 
-                      filter=f"tcp port {self.port} and (host {self.dst} and host {self.src})", 
+                      filter=f"tcp port {self.port} and (host {self.client} and host {self.server})", 
                       stop_filter=lambda p: self.exit.is_set(),
                       store=False)
         #Set running to false when sniffing is done
         self.running = False
-        if self.pcap == True:
-            if len(plist) != 0:
-                libpacket.dump_data(plist)
-            else:
-                libpacket.dump_data(sniffplist)
+
+    def stop(self):
+        self.exit.set()
+
+    # Sniffer class that starts packet sniffing
+    def __init__(self, client, server, iface, port, proto):
+        self.exit   = Event()
+        log.print("sniffing on iface {} port {}...".format(self.iface, self.port))
+        self.add_queue = proto.events.add_queue
+        self.client = client
+        self.server = server
+        self.iface = iface
+        self.port = port
+        #if self.pcap == True:
+        #    if len(plist) != 0:
+        #        libpacket.dump_data(plist)

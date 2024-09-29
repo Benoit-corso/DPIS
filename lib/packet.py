@@ -1,5 +1,5 @@
 import scapy.all as scapy
-from libs import sniffer,logger as _
+from lib import logger as _
 
 log = _.log
 
