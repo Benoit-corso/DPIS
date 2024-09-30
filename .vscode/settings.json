@@ -1,0 +1,6 @@
+{
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+}
