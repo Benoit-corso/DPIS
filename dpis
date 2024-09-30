@@ -38,21 +38,22 @@ class Target:
         # Wait for the response (2 seconds)
         res = scapy.srp(arp_req, timeout=2, verbose=False)[0]
         # getting the MAC
-        self.mac = res[0][1].hwsrc
+        #self.mac = res[0].hwsrc
         if r_mac.match(self.mac):
             self.valid = True
         return self.valid
 
-    def __init__(self, ip, name = ""):
+    def __init__(self, ip, name):
         global r_iadr, r_mac, targets
         if len(name) == 0:
             name = "target"+str(targets)
+        log.debug("new target {} with ip: {}".format(name, ip))
         if r_iadr.match(ip):
             self.name   = name
             self.ip     = ip
             targets     = targets + 1
         else: log.print("bad ip address for target {} got: {}".format(name, ip))
-        if not self.get_mac():
+        if not self.get_mac(self.ip):
             log.print("failed to get mac address for target {}".format(name))
         else:
             log.print("new target defined with name {}".format(name))
@@ -82,16 +83,18 @@ class DPIS:
     stdin       = False
     # enable socket to intercept datas
     socket      = None
-    def __init__(self, iface, proto, target, spoof = False, firewall = False, *_):
+    def __init__(self, iface, proto, target, victim, spoof = False, firewall = False, *_):
         global r_port, log;
         self.iface      = iface
         self.host       = [scapy.get_if_addr(iface), scapy.get_if_hwaddr(iface)]
-        log.print("current host informations:\n\tinterface:\t{}\n\tip:\t{}\n\tmac:\t{}".format(iface, self.host[0], self.host[1]))
-        self.gateway    = Target(scapy.conf.route.route('0.0.0.0')[2], "gateway")
-        i = 0
+        log.print("current host informations:\n\tinterface:\t{}\n\tip:\t\t{}\n\tmac:\t\t{}".format(iface, self.host[0], self.host[1]))
+        for route in conf.route.routes:
+            if iface in route and route[4] == '0.0.0.0':
+                self.gateway    = Target(route[2], 'gateway')
         for t in target:
-            self.target.append(Target(t[0], "target" + str(i) if t[1] is None or len(t[1]) == 0 else t[1]))
-            i = i + 1
+            if isinstance(t, list):
+                self.targets.append(Target(t[0], "" if t[1] is None or len(t[1]) == 0 else t[1]))
+            else: self.targets.append(Target(t))
         try:
             # If multiple protocol was specified, load and initialize every protocol
             if type(proto[0]) is not list:
@@ -104,13 +107,13 @@ class DPIS:
                     log.error("Invalid target port!")
                     sys.exit(2)
                 self.protoinfo.append(p);
-                self.protocol.append(importlib.util.find_spec("lib", "proto."+p[0]).Protocol(
-                    self.host, self.victims, self.targets, self.gateway, self.stdin
-                ))
+                self.protocol.append(importlib.util.find_spec("lib", "proto."+p[0]))#.Protocol(
+#                    self.host, self.victims, self.targets, self.gateway, self.stdin
+#                ))
         except:
-            log.error("Protocol {} doesn't exist, please define it or choose another one.".format(self.proto[0]))
+            log.error("Protocol {} doesn't exist, please define it or choose another one.".format(self.protoinfo[0]))
             sys.exit(2)
-        log.debug("protocol {} selected on port {}".format(self.proto[0], self.proto[1]))
+        log.debug("protocol {} selected on port {}".format(self.protoinfo[0][0], self.protoinfo[0][1]))
         if firewall:
             self.firewall = firewall
         if spoof:
@@ -123,7 +126,7 @@ class DPIS:
                 self.spoofer.spoof(target, self.gateway)
                 for victim in self.victims:
                     self.spoofer.spoof(target, victim)
-        self.sniffer = sniff.sniffer(self.victims[0], self.targets[0], self.iface, self.protoinfo[0][1], self.protocol)
+        self.sniffer = sniff.sniffer(self.victims[0], self.targets[0], self.iface, self.protoinfo[0][1], self.protocol[0])
 
     # Start instances and threads.
     def start(self) -> bool:
@@ -248,7 +251,7 @@ def main() -> DPIS:
         log.error("Bad argument for <protocol> should specify <name>:<port>[, <name>:<port>]")
         exit(1)
 
-    if len(args.targets) == 0:
+    if len(args.target) == 0:
         log.error("Bad argument for <target>")
         exit(1)
     elif ',' in args.target:

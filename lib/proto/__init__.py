@@ -1,5 +1,5 @@
 from threading import Thread, Event
-import scapy.layers as layer
+import scapy.layers.inet as layer
 from lib import logger as _
 
 log = _.log
