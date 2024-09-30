@@ -1,9 +1,9 @@
 from threading import Event
 import scapy.all as scapy
-from lib import logger
+from lib import logger as _
 
 # Get the logger instance from logger
-log = logger.log
+log = _.log
 
 # Sniff connection and execute conditions (Is multi-threaded)
 class sniffer:
@@ -59,8 +59,9 @@ class sniffer:
 
     # Sniffer class that starts packet sniffing
     def __init__(self, client, server, iface, port, proto):
+        global log
         self.exit   = Event()
-        log.print("sniffing on iface {} port {}...".format(self.iface, self.port))
+        _.Logger.print("sniffing on iface {} port {}...".format(self.iface, self.port))
         self.add_queue = proto.events.add_queue
         self.client = client
         self.server = server

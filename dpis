@@ -83,21 +83,27 @@ class DPIS:
     stdin       = False
     # enable socket to intercept datas
     socket      = None
-    def __init__(self, iface, proto, target, victim, spoof = False, firewall = False, *_):
+    def __init__(self, iface, proto, target, victim, spoof = False, firewall = False):
         global r_port, log;
         self.iface      = iface
         self.host       = [scapy.get_if_addr(iface), scapy.get_if_hwaddr(iface)]
         log.print("current host informations:\n\tinterface:\t{}\n\tip:\t\t{}\n\tmac:\t\t{}".format(iface, self.host[0], self.host[1]))
-        for route in conf.route.routes:
+        for route in scapy.conf.route.routes:
             if iface in route and route[4] == '0.0.0.0':
                 self.gateway    = Target(route[2], 'gateway')
         for t in target:
             if isinstance(t, list):
                 self.targets.append(Target(t[0], "" if t[1] is None or len(t[1]) == 0 else t[1]))
-            else: self.targets.append(Target(t))
+            else: self.targets.append(Target(t, ""))
+        for v in victim:
+            if isinstance(v, list):
+                self.victims.append(Target(v[0], "" if v[1] is None or len(v[1]) == 0 else v[1]))
+            else: self.victims.append(Target(v, ""))
+        log.debug(proto)
+        i = 0;
         try:
             # If multiple protocol was specified, load and initialize every protocol
-            if type(proto[0]) is not list:
+            if not isinstance(proto[0], list):
                 proto = [proto]
             for p in proto:
                 # Split the port argument into protocol and port
@@ -107,13 +113,15 @@ class DPIS:
                     log.error("Invalid target port!")
                     sys.exit(2)
                 self.protoinfo.append(p);
-                self.protocol.append(importlib.util.find_spec("lib", "proto."+p[0]))#.Protocol(
-#                    self.host, self.victims, self.targets, self.gateway, self.stdin
-#                ))
-        except:
-            log.error("Protocol {} doesn't exist, please define it or choose another one.".format(self.protoinfo[0]))
+                self.protocol.append(importlib.import_module("lib.proto."+p[0]).Protocol(
+                    self.host, self.victims, self.targets, self.gateway, self.stdin
+                ))
+                i = i + 1
+        except (Exception or RecursionError or ReferenceError) as E:
+            log.debug(E)
+            #log.error("Protocol {} doesn't exist, please define it or choose another one.".format(self.protoinfo[i][0]))
             sys.exit(2)
-        log.debug("protocol {} selected on port {}".format(self.protoinfo[0][0], self.protoinfo[0][1]))
+        log.debug("protocol {} selected on port {}".format(self.protoinfo[i][0], self.protoinfo[i][1]))
         if firewall:
             self.firewall = firewall
         if spoof:
@@ -126,7 +134,14 @@ class DPIS:
                 self.spoofer.spoof(target, self.gateway)
                 for victim in self.victims:
                     self.spoofer.spoof(target, victim)
-        self.sniffer = sniff.sniffer(self.victims[0], self.targets[0], self.iface, self.protoinfo[0][1], self.protocol[0])
+        log.debug(self.protocol)
+        self.sniffer = sniff.sniffer(
+            self.victims[0],
+            self.targets[0],
+            self.iface,
+            self.protoinfo[0][1],
+            self.protocol[0]
+        )
 
     # Start instances and threads.
     def start(self) -> bool:

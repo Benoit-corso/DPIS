@@ -1,5 +1,5 @@
 import scapy.all as scapy
-from libs import packet as lpkt,logger as _
+from lib import packet as lpkt,logger as _
 from lib.proto import Events, atoh, htos
 
 log = _.log
@@ -36,13 +36,18 @@ class MySQL:
         self.layout_srv[scapy.TCP].dport = port;
 
     def __init__(self, server, client, host):
+        #if isinstance(server, list):
+        #    server = server[0]
+        #if isinstance(client, list):
+        #    client = client[0]
         self.server = server
         self.client = client
+        #log.error("init, {} {}".format(len(server), server))
         # server -> client
         # except the firsts 3 packets server only send PA
         self.layout_srv = scapy.Ether(
             src=server.mac,
-            dst=host.mac
+            dst=host[1]
         ) / scapy.IP(
             src=server.ip,
             dst=client.ip
@@ -53,10 +58,11 @@ class MySQL:
             seq = 1,
             ack = 1
         )
+        log.error("after layout srv")
         # client -> server
         # except the firsts 3 packets client only send PA
         self.layout_cli = scapy.Ether(
-            src=host.mac,
+            src=host[1],
             dst=server.mac
         ) / scapy.IP(
             src=client.ip,
@@ -68,6 +74,7 @@ class MySQL:
             seq = 1,
             ack = 79
         )
+        log.error("after layout cli")
 
 class Protocol:
     # Store the event object
@@ -170,6 +177,7 @@ class Protocol:
     def __init__(self, host, victims, targets, gw, stdin = False):
         # Initialize the event handler with the source and distination IP Addresses
         self.events = Events('tcp')
+        log.debug(victims, targets)
         self.forge  = MySQL(victims[0], targets[0], host)
         
         # Detect Syn Packet
