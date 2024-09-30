@@ -91,12 +91,15 @@ class DPIS:
 		self.iface	  = iface
 		self.host	   = [scapy.get_if_addr(iface), scapy.get_if_hwaddr(iface)]
 		log.print("current host informations:\n\tinterface:\t{}\n\tip:\t\t{}\n\tmac:\t\t{}".format(iface, self.host[0], self.host[1]))
+		# we detect the gateway for the current interface
 		for route in scapy.conf.route.routes:
 			if iface in route and route[4] == '0.0.0.0':
 				self.gateway	= Target(route[2], 'gateway')
+				break;
 			else:
-				log.print(scapy.conf.route.route('0.0.0.0')[2])
-				log.print(self.gateway)
+				self.gateway	= scapy.conf.route.route('0.0.0.0')[2]
+				break;
+		# creation of every Target object class
 		for t in target:
 			if isinstance(t, list):
 				self.targets.append(Target(t[0], "" if t[1] is None or len(t[1]) == 0 else t[1]))
@@ -105,13 +108,12 @@ class DPIS:
 			if isinstance(v, list):
 				self.victims.append(Target(v[0], "" if v[1] is None or len(v[1]) == 0 else v[1]))
 			else: self.victims.append(Target(v, ""))
-		log.debug(proto)
 		try:
 			# If multiple protocol was specified, load and initialize every protocol
 			if not isinstance(proto[0], list):
 				proto = [proto]
 			for p in proto:
-				# Split the port argument into protocol and port
+				# Split the port argument into protocol_name and port
 				p = p.split(':')
 				# Make sure port format is correct
 				if not r_port.match(p[1]):
@@ -123,7 +125,6 @@ class DPIS:
 				))
 		except (Exception or RecursionError or ReferenceError) as E:
 			log.debug(E)
-			#log.error("Protocol {} doesn't exist, please define it or choose another one.".format(self.protoinfo[i][0]))
 			sys.exit(2)
 		log.debug("protocol {} selected on port {}".format(self.protoinfo[0][0], self.protoinfo[0][1]))
 		if firewall:
