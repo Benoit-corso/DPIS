@@ -15,6 +15,7 @@ class Sniffer:
 		self.filter	= _filter
 		self.routes	= routes
 		log.print("Sniffer prepared on iface {} port {}".format(self.iface, info))
+		log.print("routes: {}".format(len(routes)))
 
 	#Function to handle each packet that is sniffed
 	def sniff(self, pkt):
