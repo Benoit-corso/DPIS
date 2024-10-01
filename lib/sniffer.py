@@ -1,6 +1,6 @@
 from threading import Event
 import scapy.all as scapy
-from datas import logger as _
+from lib import logger as _
 
 # Get the logger instance from logger
 log = _.log

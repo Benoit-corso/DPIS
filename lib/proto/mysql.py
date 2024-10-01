@@ -1,6 +1,6 @@
 import scapy.all as scapy
-from datas import logger as _
-from lib import packet as lpkt
+from lib import logger as _
+from datas import packet as lpkt
 from lib.proto import Events, atoh, htos
 
 log = _.log

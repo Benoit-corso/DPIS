@@ -1,7 +1,7 @@
 import sys
 from threading import Thread, Event
 import scapy.layers.inet as layer
-from datas import logger as _
+from lib import logger as _
 
 log = _.log
 
