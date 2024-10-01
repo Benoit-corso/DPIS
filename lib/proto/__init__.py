@@ -45,11 +45,9 @@ class Events(Thread):
 	# Function to add a new event with the callback and optional condtions
 	def add(self, name, callback, *conditions):
 		[wrapper, add_condition] = self.create_wrapper(name, callback);
-		if name in self.events is None:
+		if name in self.events:
 			self.events[name] = [wrapper, add_condition];
-		log.print("cond: {}".format(conditions))
 		for cond in list(conditions):
-			log.debug("add condition {}".format(cond))
 			add_condition(cond)
 	
 	# function to create a wrapperr for the event callback
@@ -61,6 +59,7 @@ class Events(Thread):
 			log.debug("for {} event new condition: {}".format(name, cond))
 		# Inner function thar wraps the original callback
 		def wrapper(pkt):
+			log.debug("")
 			for cond in conditions:
 				retval = eval(cond, {
 					'pkt': pkt,
@@ -84,7 +83,6 @@ class Events(Thread):
 			return;
 		# Add the packet to the packet queue
 		self.PacketQueue.append(pkt)
-		log.print("add packet")
 
 	# function that checks conditions againdt queued packets
 	def run(self):
