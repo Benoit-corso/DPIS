@@ -136,9 +136,7 @@ class DPIS:
 				sniff_filter = _f + f"{_proto.events.protocol} port {p[1]} and ({hosts})"
 				log.debug("{} protocol successfully initialized.".format(p[0]))
 				def route(dport, sport, pkt) -> None:
-					log.print("inside route")
 					if dport == p[1] or sport == p[1]:
-						log.print("exec route")
 						_proto.events.add_queue(pkt);
 				route.layer = _proto.events.protocol
 				routes.append(route)
