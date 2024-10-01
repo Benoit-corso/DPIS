@@ -62,7 +62,6 @@ class Events(Thread):
 		# Inner function thar wraps the original callback
 		def wrapper(pkt):
 			for cond in conditions:
-				log.debug("checking condition: {}".format(cond))
 				retval = eval(cond, {
 					'pkt': pkt,
 					'syn': self.syn,
