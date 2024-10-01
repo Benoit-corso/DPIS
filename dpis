@@ -137,7 +137,6 @@ class DPIS:
 				log.debug("{} protocol successfully initialized.".format(p[0]))
 				def route(dport, sport, pkt) -> None:
 					if dport == p[1] or sport == p[1]:
-						log.print("inside route")
 						_proto.events.add_queue(pkt);
 				route.layer = _proto.events.protocol
 				routes.append(route)

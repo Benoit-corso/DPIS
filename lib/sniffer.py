@@ -22,7 +22,6 @@ class Sniffer:
 	def sniff(self, pkt):
 		for r in self.routes:
 			if r.layer == 'tcp' and pkt.haslayer(scapy.TCP):
-				log.print("mode tcp")
 				r(pkt[scapy.TCP].sport, pkt[scapy.TCP].dport, pkt)
 			elif pkt.haslayer(scapy.UDP):
 				r(pkt[scapy.UDP].sport, pkt[scapy.UDP].dport, pkt)
