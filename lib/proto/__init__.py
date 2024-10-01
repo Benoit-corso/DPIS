@@ -95,6 +95,7 @@ class Events(Thread):
 					pkt = self.PacketQueue.pop()
 					# loop throught each condition and its associated callback
 					for name, wrapper in self.events.items():
+						log.print("before calling wrapper")
 						wrapper[0](pkt)
 					self.last = pkt
 				pkt = None
