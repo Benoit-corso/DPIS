@@ -109,13 +109,13 @@ class DPIS:
 					_proto = importlib.import_module("lib.proto."+p[0]).Protocol(
 						self.host, stdin, victims, targets, self.gateway
 					)
-					hosts = "and ".join("host "+t.ip for t in (victims + targets))
+					hosts = " and ".join("host "+t.ip for t in (victims + targets))
 					self.protocol.append(_proto)
 				elif len(p) == 4:
 					_proto = importlib.import_module("lib.proto."+p[0]).Protocol(
 						self.host, stdin, p[2], p[3], self.gateway
 					)
-					hosts = "and ".join("host "+t.ip for t in (p[2] + [3]))
+					hosts = " and ".join("host "+t.ip for t in (p[2] + [3]))
 					self.protocol.append(_proto)
 					p_victims = p_victims + p[2]
 					p_targets = p_targets + p[3]
