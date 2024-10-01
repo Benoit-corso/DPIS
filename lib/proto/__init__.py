@@ -93,7 +93,7 @@ class Events(Thread):
 			if len(self.PacketQueue) != 0:
 				# If packet available for processing
 				pkt = self.PacketQueue.pop()
-				log.print("before calling wrapper")
+				log.print("before calling wrapper {}".format(len(self.events)))
 				# loop throught each condition and its associated callback
 				for name, wrapper in self.events.items():
 					wrapper[0](pkt)
