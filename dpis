@@ -133,7 +133,7 @@ class DPIS:
 							if not t in v.victims and (v.valid or v.get_mac()):
 								if spoofing: self.spoofer.spoof(t, v)
 								v.victims.add(t)
-				_f = _f + f"{_proto.events.protocol} port {p[1]} and ({hosts})"
+				sniff_filter = _f + f"{_proto.events.protocol} port {p[1]} and ({hosts})"
 				log.debug("{} protocol successfully initialized.".format(p[0]))
 				def route(dport, sport, pkt) -> None:
 					log.print("inside route")
