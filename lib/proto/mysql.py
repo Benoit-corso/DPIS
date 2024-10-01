@@ -92,19 +92,19 @@ class Protocol:
 		self.stdin	= stdin
 
 		# Detect Syn Packet
-		self.events.add('detect syn', self.detect_syn, 
+		self.events.add('Syn', self.detect_syn, 
 			"tcp.flags == 0x02",
 		)
 		# Detect FIN Packet
-		self.events.add('detect fin', self.detect_fin, 
+		self.events.add('Fin', self.detect_fin, 
 			"tcp.flags == 'FA'",
 		)
 		# Detect Ack packet
-		self.events.add('detect ack', self.detect_ack, 
+		self.events.add('Ack', self.detect_ack, 
 			"tcp.flags == 0x010",
 		)
 		# Detect PSH packet
-		self.events.add('detect psh', self.detect_psh, 
+		self.events.add('Psh', self.detect_psh, 
 			"tcp.flags == 0x018",
 		)
 

@@ -44,9 +44,11 @@ class Events(Thread):
 
 	# Function to add a new event with the callback and optional condtions
 	def add(self, name, callback, *conditions):
-		[wrapper, add_condition] = self.create_wrapper(name, callback);
+		wrapper = None
+		add_condition = None
 		if name in self.events:
-			self.events[name] = [wrapper, add_condition];
+			[wrapper, add_condition] = self.events[name];
+		else: self.events[name] = [wrapper, add_condition] = self.create_wrapper(name, callback);
 		for cond in list(conditions):
 			add_condition(cond)
 	
