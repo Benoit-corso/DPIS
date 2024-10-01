@@ -82,6 +82,7 @@ class Events(Thread):
 			return;
 		# Add the packet to the packet queue
 		self.PacketQueue.append(pkt)
+		log.print("add packet")
 
 	# function that checks conditions againdt queued packets
 	def run(self):
