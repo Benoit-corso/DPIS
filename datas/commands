@@ -1,7 +1,10 @@
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 apt install vim screen dsniff tcpdump python3-dev iputils-ping net-tools python3-pip netcat git python3-venv
 
 # disable libnetfilter-queue-dev
+git clone https://github.com/Benoit-corso/DPIS.git; cd DPIS
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install scapy
 
 ping 172.18.0.1 -c 3

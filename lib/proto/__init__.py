@@ -93,9 +93,9 @@ class Events(Thread):
 			if len(self.PacketQueue) != 0:
 				# If packet available for processing
 				pkt = self.PacketQueue.pop()
+				log.print("before calling wrapper")
 				# loop throught each condition and its associated callback
 				for name, wrapper in self.events.items():
-					log.print("before calling wrapper")
 					wrapper[0](pkt)
 				self.last = pkt
 				pkt = None
