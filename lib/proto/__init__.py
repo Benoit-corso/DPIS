@@ -46,8 +46,10 @@ class Events(Thread):
 	def add(self, name, callback, *conditions):
 		[wrapper, add_condition] = self.create_wrapper(name, callback);
 		if name in self.events is None:
-			self.events[str(name)] = [wrapper, add_condition];
+			self.events[name] = [wrapper, add_condition];
+		log.print("cond: {}".format(conditions))
 		for cond in conditions:
+			log.debug("add condition {}".format(cond))
 			add_condition(cond)
 	
 	# function to create a wrapperr for the event callback
