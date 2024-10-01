@@ -98,7 +98,7 @@ class Events(Thread):
 					log.print("before calling wrapper")
 					wrapper[0](pkt)
 				self.last = pkt
-			pkt = None
+				pkt = None
 
 	# Fire the stop event
 	def stop(self):
