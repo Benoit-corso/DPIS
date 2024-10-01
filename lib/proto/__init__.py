@@ -88,19 +88,16 @@ class Events(Thread):
 		log.debug("Events thread started.")
 		# Initilisation packet = None
 		pkt = None
-		try:
-			while not self.exit.is_set():
-				if len(self.PacketQueue) != 0:
-					# If packet available for processing
-					pkt = self.PacketQueue.pop()
-					# loop throught each condition and its associated callback
-					for name, wrapper in self.events.items():
-						log.print("before calling wrapper")
-						wrapper[0](pkt)
-					self.last = pkt
-				pkt = None
-		except KeyboardInterrupt or self.exit.is_set():
-			return;
+		while not self.exit.is_set():
+			if len(self.PacketQueue) != 0:
+				# If packet available for processing
+				pkt = self.PacketQueue.pop()
+				# loop throught each condition and its associated callback
+				for name, wrapper in self.events.items():
+					log.print("before calling wrapper")
+					wrapper[0](pkt)
+				self.last = pkt
+			pkt = None
 
 	# Fire the stop event
 	def stop(self):
