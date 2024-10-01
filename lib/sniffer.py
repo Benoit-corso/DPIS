@@ -16,6 +16,7 @@ class Sniffer:
 		self.routes	= routes
 		log.print("Sniffer prepared on iface {} port {}".format(self.iface, info))
 		log.print("routes: {}".format(len(routes)))
+		log.print("filter: {}".format(_filter))
 
 	#Function to handle each packet that is sniffed
 	def sniff(self, pkt):
@@ -23,12 +24,9 @@ class Sniffer:
 			if r.layer == 'tcp' and pkt.haslayer(scapy.TCP):
 				log.print('tcp mode')
 				r(pkt[scapy.TCP].sport, pkt[scapy.TCP].dport, pkt)
-				return True;
 			elif pkt.haslayer(scapy.UDP):
 				log.print('udp mode')
 				r(pkt[scapy.UDP].sport, pkt[scapy.UDP].dport, pkt)
-				return True;
-			return False
 #--------------------------------------------------------------------------------------
 	def start(self):
 		#Scapy sniff function to start capturing packet
