@@ -63,7 +63,7 @@ class MySQL:
 		# SQL state			= 3238303030		(state: 28000)
 		payload = "ff1504233238303030"+atoh(response)
 		length = len(bytes.fromhex(payload)).to_bytes(3, 'little')
-		return scapy.Raw(load=length+b"\x02"+payload.encode('utf-8'))
+		return scapy.Raw(load=length+b"\x02"+payload.encode('utf-8').hex())
 
 	def query(self, request):
 		# packet length		= 0x00 0x00 0x00	(bytes on 3 octets)
@@ -71,7 +71,7 @@ class MySQL:
 		# MySQL query		= 0x03				(query command code)
 		payload = "03"+atoh(request)
 		length  = len(bytes.fromhex(payload)).to_bytes(3, 'little')
-		return scapy.Raw(load=length+b"\x00"+payload.encode('utf-8'))
+		return scapy.Raw(load=length+b"\x00"+payload.encode('utf-8').hex())
 
 	def nat(self, port):
 		self.layout_cli[scapy.TCP].sport = port;
