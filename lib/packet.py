@@ -1,28 +1,24 @@
 import scapy.all as scapy
-from lib import logger as _, sniffer
-
-log = _.log
-
 # Append a packet to the list
-def append_packet(pkt = None):
-	# If no packet return immediatly
-	if pkt is None:
-		return;
-	# Append the given packet to the packet list in the sniffer settings
-	sniffer.plist.append(pkt)
+#def append_packet(pkt = None):
+#	# If no packet return immediatly
+#	if pkt is None:
+#		return;
+#	# Append the given packet to the packet list in the sniffer settings
+#	sniffer.plist.append(pkt)
 
 # Dump datas to a pcap file
-def dump_data(pkts = None, filename = None):
-	# Import global settings object
-	# No output file, return
-	if sniffer.pcap == False:
-		return;
-	# If no packet list is provided, dump the sniffers packer list 
-	if pkts is None:
-		scapy.wrpcap(("dyndump.pcap" if filename is None else filename), sniffer.plist)
-	# Else write the packet in .pcap file
-	else:
-		scapy.wrpcap(("dyndump.pcap" if filename is None else filename), pkts)
+#def dump_data(pkts = None, filename = None):
+#	# Import global settings object
+#	# No output file, return
+#	if sniffer.pcap == False:
+#		return;
+#	# If no packet list is provided, dump the sniffers packer list 
+#	if pkts is None:
+#		scapy.wrpcap(("dyndump.pcap" if filename is None else filename), sniffer.plist)
+#	# Else write the packet in .pcap file
+#	else:
+#		scapy.wrpcap(("dyndump.pcap" if filename is None else filename), pkts)
 
 # Create a psh packet with payload
 def psh(pkt = None, payload = ""):
@@ -87,16 +83,3 @@ def send(pkt = None):
 		return;
 	# Use Scapy to send packet in data link layer
 	scapy.sendp(pkt, verbose=False)
-
-# Should be a hook function when a response is recieved
-# Actually disabled, this function should be into proto.????
-# Fonction to handle receiving response (curentrly in progress)
-#def receive():
-#	# Create thread that continuously listens for responses
-#	def thread():
-#		#Infinite loop to kipe tread alive
-#		while True:
-#			# print response receive ?
-#			print("", end="")
-#	threading.Thread(target=thread).start()
-#	# Start the receiving fonction in separate thread

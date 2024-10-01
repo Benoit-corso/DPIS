@@ -1,6 +1,7 @@
+import sys
 from threading import Thread, Event
 import scapy.layers.inet as layer
-from lib import logger as _
+from datas import logger as _
 
 log = _.log
 
@@ -29,23 +30,33 @@ class Events(Thread):
 		psh	 = 0
 		ack	 = 0
 		fin	 = 0
+	
+	# Initialize the events class
+	def __init__(self, netProto = 'tcp'):
+		super(Events, self).__init__()
+		self.exit = Event()
+		if netProto == 'tcp':
+			self.protocol = 'tcp'
+			self.layers = { **self.layers, 'TCP': layer.TCP }
+		else:
+			self.protocol = 'udp'
+			self.layers = { **self.layers, 'UDP': layer.UDP }
 
 	# Function to add a new event with the callback and optional condtions
 	def add(self, name, callback, *conditions):
-		try:
-			if self.events[name] is None:
-				self.events[name] = self.create_wrapper(name, callback);
-			log.error('there')
-			for cond in conditions:
-				for c in cond:
-					self.events[name][1](c)
-		except Exception as E:
-			log.error(E)
+		[wrapper, add_condition] = self.create_wrapper(name, callback);
+		if name in self.events is None:
+			self.events[str(name)] = [wrapper, add_condition];
+		for cond in conditions:
+			add_condition(cond)
 	
 	# function to create a wrapperr for the event callback
 	def create_wrapper(self, name, callback):
 		global log
 		conditions = []
+		def add_condition(cond):
+			conditions.append(cond)
+			log.debug("for {} event new condition: {}".format(name, cond))
 		# Inner function thar wraps the original callback
 		def wrapper(pkt):
 			for cond in conditions:
@@ -61,11 +72,7 @@ class Events(Thread):
 				if retval == True:
 					log.debug("{} event was fired.".format(name))
 					return callback(name, pkt)
-		def add_condition(cond):
-			conditions.append(cond)
-			log.debug("for {} event new condition: {}".format(name, cond))
 		# Return the wrapped callback
-		log.error('there')
 		return [wrapper, add_condition];
 	
 	# function to add a packet to the processing queuez
@@ -84,18 +91,14 @@ class Events(Thread):
 		try:
 			while not self.exit.is_set():
 				if len(self.PacketQueue) != 0:
+					# If packet available for processing
 					pkt = self.PacketQueue.pop()
-				# If packet available for processing
-				# loopt throught each condition and its assoiciated callback
+					# loop throught each condition and its associated callback
 					for name, wrapper in self.events.items():
 						wrapper[0](pkt)
-				# reset pkt after processing
-				# if packet queu is not empty, get the next pakcet
-					# pop the next pakcet from the queue for processing
-				self.last = pkt
+					self.last = pkt
 				pkt = None
 		except KeyboardInterrupt or self.exit.is_set():
-			log.print("Events thread was stopped.")
 			return;
 
 	# Fire the stop event
@@ -103,16 +106,6 @@ class Events(Thread):
 		global log
 		self.exit.set();
 		log.debug("Stopping Events thread, please wait.")
-	
-	# Initialize the events class
-	def __init__(self, netProto = 'tcp'):
-		global log
-		super(Events, self).__init__()
-		self.exit = Event()
-		if netProto == 'tcp':
-			self.layers = { **self.layers, 'TCP': layer.TCP }
-		else:
-			self.layers = { **self.layers, 'UDP': layer.UDP }
 
 def htos(hexstring):
 	return bytes.fromhex(hexstring)

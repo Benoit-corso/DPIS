@@ -1,5 +1,7 @@
 import os
-from libs import logger
+from datas import logger as _
+
+log = _.log
 
 class settings:
 	cmd_list = []
