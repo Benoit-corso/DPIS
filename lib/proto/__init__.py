@@ -48,7 +48,7 @@ class Events(Thread):
 		if name in self.events is None:
 			self.events[name] = [wrapper, add_condition];
 		log.print("cond: {}".format(conditions))
-		for cond in conditions:
+		for cond in list(conditions):
 			log.debug("add condition {}".format(cond))
 			add_condition(cond)
 	
