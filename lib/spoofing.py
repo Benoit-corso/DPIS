@@ -35,13 +35,11 @@ class Spoofer(Thread):
 	# Thread routine
 	def run(self):
 		log.print("Start spoofing...")
-		log.print("prepared packets: {}".format(len(self.pkts)))
 		self.exit.clear()
 		try:
 			while not self.exit.is_set():
 				for spoof in self.pkts:
 					scapy.sendp(spoof, verbose=False)
-					log.print("spoof", spoof.show())
 				time.sleep(self.delay)
 		except KeyboardInterrupt or self.exit.is_set():
 			for key in self.targets:
