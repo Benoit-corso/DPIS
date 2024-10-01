@@ -93,19 +93,19 @@ class Protocol:
 
 		# Detect Syn Packet
 		self.events.add('Syn', self.detect_syn, 
-			"TCP.flags == 'S'",
+			"pkt[TCP].flags == 'S'",
 		)
 		# Detect FIN Packet
 		self.events.add('Fin', self.detect_fin, 
-			"TCP.flags == 'FA'",
+			"pkt[TCP].flags == 'FA'",
 		)
 		# Detect Ack packet
 		self.events.add('Ack', self.detect_ack, 
-			"TCP.flags == 'A'",
+			"pkt[TCP].flags == 'A'",
 		)
 		# Detect PSH packet
 		self.events.add('Psh', self.detect_psh, 
-			"TCP.flags == 'PA'",
+			"pkt[TCP].flags == 'PA'",
 		)
 
 	# Dectect SYN packets and increment
