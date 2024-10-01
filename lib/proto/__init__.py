@@ -23,6 +23,7 @@ class Events(Thread):
 	ack		 = 0
 	fin		 = 0
 	rst		 = 0
+	last	 = None
 
 	# Function to reset TCP flag counters
 	def reset():

