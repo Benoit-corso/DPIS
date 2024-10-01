@@ -88,7 +88,7 @@ class Events(Thread):
 
 	# function that checks conditions againdt queued packets
 	def run(self):
-		log.debug("Events thread started.")
+		log.debug("Events thread started. Events({})".format(len(self.events)))
 		# Initilisation packet = None
 		pkt = None
 		while not self.exit.is_set():
