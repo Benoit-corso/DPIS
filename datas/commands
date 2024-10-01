@@ -1,5 +1,5 @@
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
-apt install vim screen dsniff tcpdump python3-dev iputils-ping net-tools python3-pip netcat git
+apt install vim screen dsniff tcpdump python3-dev iputils-ping net-tools python3-pip netcat git python3-venv
 
 # disable libnetfilter-queue-dev
 python3 -m pip install scapy

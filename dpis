@@ -76,15 +76,15 @@ class DPIS:
 	firewall	= None
 	protocol	= []
 	def __init__(self, proto, stdin, victims, targets, spoofing, firewall):
-		from lib import sniffer as sniff, spoofing as spoof, firewall as fw
+		from lib import sniffer as sniff, spoofing as spoof
 		global log, host;
 		self.host		= host
 		# we detect the gateway for the current interface
 		for route in scapy.conf.route.routes:
-			if host[2] in route and route[4] == '0.0.0.0':
+			if host[2] in route and route[4] == '0.0.0.0' and route[2] != "0.0.0.0":
 				self.gateway	= Target(route[2], 'gateway')
 				break;
-			else:
+			elif scapy.conf.route.route('0.0.0.0')[2] != "0.0.0.0":
 				self.gateway	= Target(scapy.conf.route.route('0.0.0.0')[2], 'gateway')
 				break;
 		# should be always at the beginning and after host initialisation
