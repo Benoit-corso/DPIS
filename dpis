@@ -56,7 +56,7 @@ class Target:
 		return self.valid
 
 # Dynamic Protocol Injector Sniffer (called Deep-Peace)
-# TODO: Firewall, StdIn, Socket
+# TODO: Firewall, StdIn, Socket, Pcap
 class DPIS:
 	# host interface we're listening to
 	iface		= ""
