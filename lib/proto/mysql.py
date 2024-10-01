@@ -121,6 +121,8 @@ class Protocol:
 		self.events.psh = 0
 		self.events.syn = 0
 		self.events.fin = self.events.fin + 1
+		self.trick = False
+		log.print("######## fin ########")
 
 	# Detect ACK packet and increment 
 	def detect_ack(self, name, pkt):
