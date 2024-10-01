@@ -95,10 +95,6 @@ class Protocol:
 		self.events.add('Syn', self.detect_syn, 
 			"pkt[TCP].flags == 'S'",
 		)
-		# Detect FIN Packet
-		self.events.add('Fin', self.detect_fin, 
-			"pkt[TCP].flags == 'FA'",
-		)
 		# Detect Ack packet
 		self.events.add('Ack', self.detect_ack, 
 			"pkt[TCP].flags == 'A'",
@@ -106,6 +102,10 @@ class Protocol:
 		# Detect PSH packet
 		self.events.add('Psh', self.detect_psh, 
 			"pkt[TCP].flags == 'PA'",
+		)
+		# Detect FIN Packet
+		self.events.add('Fin', self.detect_fin, 
+			"pkt[TCP].flags == 'FA'",
 		)
 
 	# Dectect SYN packets and increment
@@ -142,7 +142,7 @@ class Protocol:
 		#log.debug("psh:\t{}".format(self.events.psh))
 		if self.events.psh == 1 and not self.trick:
 			# send response error to client
-			self.forge.layout_srv[scapy.TCP].ack = self.forge.layout_srv[scapy.TCP].ack + len(pkt[scapy.TCP].load)
+			self.forge.layout_srv[scapy.TCP].ack = self.forge.layout_srv[scapy.TCP].ack + len("" if pkt[scapy.TCP].load is None else pkt[scapy.TCP].load)
 			scapy.sendp(self.forge.layout_srv,
 				verbose=False)
 			self.forge.layout_srv[scapy.TCP].flags = 'PA'
