@@ -99,6 +99,7 @@ class Events(Thread):
 					wrapper[0](pkt)
 				self.last = pkt
 				pkt = None
+		log.print("loop finished")
 
 	# Fire the stop event
 	def stop(self):
